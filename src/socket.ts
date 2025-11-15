@@ -20,7 +20,7 @@ export const initSocket = (server: HttpServer): SocketIOServer => {
   io.on("connection", (socket) => {
     console.log("connetion....");
     
-    handleSocketConnection(socket, io);
+    // handleSocketConnection(socket, io);
   });
 
   return io;

@@ -1,39 +1,39 @@
-import jwt from "jsonwebtoken";
-import "dotenv/config";
+// import jwt from "jsonwebtoken";
+// import "dotenv/config";
 
-export interface DecodedToken {
-  clientId: string;
-  role: string;
-}
+// export interface DecodedToken {
+//   clientId: string;
+//   role: string;
+// }
 
-export class TokenService {
-  static verifyAccessToken(token: string): DecodedToken {
-    return jwt.verify(
-      token,
-      process.env.ACCESS_TOKEN || "retro-routes"
-    ) as DecodedToken;
-  }
+// export class TokenService {
+//   static verifyAccessToken(token: string): DecodedToken {
+//     return jwt.verify(
+//       token,
+//       process.env.ACCESS_TOKEN || "retro-routes"
+//     ) as DecodedToken;
+//   }
 
-  static verifyRefreshToken(token: string): DecodedToken {
-    return jwt.verify(
-      token,
-      process.env.REFRESH_TOKEN || "retro-routes"
-    ) as DecodedToken;
-  }
+//   static verifyRefreshToken(token: string): DecodedToken {
+//     return jwt.verify(
+//       token,
+//       process.env.REFRESH_TOKEN || "retro-routes"
+//     ) as DecodedToken;
+//   }
 
-  static generateTokens(clientId: string, role: string) {
-    const token = jwt.sign(
-      { clientId, role },
-      process.env.ACCESS_TOKEN || "retro-routes",
-      { expiresIn: "15m" }
-    );
+//   static generateTokens(clientId: string, role: string) {
+//     const token = jwt.sign(
+//       { clientId, role },
+//       process.env.ACCESS_TOKEN || "retro-routes",
+//       { expiresIn: "15m" }
+//     );
 
-    const refreshToken = jwt.sign(
-      { clientId, role },
-      process.env.REFRESH_TOKEN || "retro-routes",
-      { expiresIn: "7d" }
-    );
+//     const refreshToken = jwt.sign(
+//       { clientId, role },
+//       process.env.REFRESH_TOKEN || "retro-routes",
+//       { expiresIn: "7d" }
+//     );
 
-    return { token, refreshToken };
-  }
-}
+//     return { token, refreshToken };
+//   }
+// }

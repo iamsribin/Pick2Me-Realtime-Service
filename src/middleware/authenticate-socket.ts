@@ -1,77 +1,43 @@
-import jwt from "jsonwebtoken";
 import { Socket } from "socket.io";
-import { TokenService } from "../utils/token-service";
+import * as cookie from "cookie";
+import jwt from "jsonwebtoken";
+import {RedisService}  from "@Pick2Me/shared/redis"; 
 
-interface DecodedToken {
-  clientId: string;
-  role: string;
-  iat?: number;
-  exp?: number;
-}
-
-export interface AuthenticatedSocket extends Socket {
-  decoded?: DecodedToken;
-} 
-
-export const authenticateSocket = async (
-  socket: AuthenticatedSocket, 
-  next: (err?: Error) => void
-) => {
+export async function authenticateSocket(socket: Socket, next: (err?: Error) => void) {
   try {
-    const { token, refreshToken } = socket.handshake.query as { 
-      token?: string; 
-      refreshToken?: string; 
-    };
-    
-    console.log('Authentication attempt:', { 
-      hasToken: !!token, 
-      hasRefreshToken: !!refreshToken,
-      socketId: socket.id 
-    });
+    const rawCookie = socket.handshake.headers.cookie;
+    if (!rawCookie) return next(new Error("no_cookies"));
 
-    if (!token) {
-      console.log('No auth token provided');
-      return next(new Error("NO_AUTH_TOKEN"));
-    }
+    const cookies = cookie.parse(rawCookie);
+    console.log("Parsed cookies:", cookies);
+    
+    const accessToken = cookies.accessToken;
+
+    if (!accessToken) return next(new Error("no_access_token"));
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
-      socket.decoded = decoded;
-      console.log(`Successfully authenticated ${decoded.role}: ${decoded.clientId}`);
-      return next();
-    } catch (tokenError) {
-      console.log('Main token verification failed:', tokenError.message);
-      
-      if (refreshToken) {
-        try {
-          const newTokens = verifyRefreshToken(refreshToken);
-          socket.emit('token_refreshed', newTokens);
-          
-          const decoded = jwt.verify(newTokens.token, process.env.JWT_SECRET as string) as DecodedToken;
-          socket.decoded = decoded;
-          console.log(`Token refreshed and authenticated ${decoded.role}: ${decoded.clientId}`);
-          return next();
-        } catch (refreshError) {
-          console.log('Refresh token verification failed:', refreshError.message);
-          return next(new Error("INVALID_REFRESH_TOKEN"));
-        }
+      const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!) as { id: string; role: string };
+
+      // Optional: check blacklist or ban
+      const redis = RedisService.getInstance();
+      const isBlacklisted = await redis.checkBlacklistedToken(decoded.id);
+      if (isBlacklisted) {
+        return next(new Error("user_blocked"));
       }
+
+      socket.data.user = { id: decoded.id, role: decoded.role };
+
+      return next();
+    } catch (err: any) {
+      console.log(err);
       
-      return next(new Error("INVALID_TOKEN"));
+      if (err.name === "TokenExpiredError") {
+        return next(new Error("token_expired"));
+      }
+      return next(new Error("invalid_token"));
     }
   } catch (err) {
-    console.error('Socket authentication error:', err);
-    return next(new Error("AUTHENTICATION_FAILED"));
+    console.error("authenticateSocket error", err);
+    return next(new Error("auth_error"));
   }
-};
-
-const verifyRefreshToken = (
-  refreshToken: string
-): { token: string; refreshToken: string } => {
-  try {
-    const decoded = TokenService.verifyRefreshToken(refreshToken);
-    return TokenService.generateTokens(decoded.clientId, decoded.role);
-  } catch (error) {
-    throw new Error("Invalid refresh token");
-  }
-};
+}

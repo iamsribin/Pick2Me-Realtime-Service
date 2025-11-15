@@ -1,9 +1,12 @@
+import "dotenv/config";
 import express from 'express';
 import http from 'http';
 import { initSocket } from './socket';
+import { isEnvDefined } from "./utils/envChecker";
+import { createRedisService } from "@Pick2Me/shared/redis";
+
 // import { Consumer } from './events/consumer';
 // import { RealtimeService } from './services/realtime-service';
-import "dotenv/config";
 // import { RideController } from './controller/ride-controller';
 // import "../src/utils/monitor-online-driver"
 // import { RideController } from './controller/implementation/ride-controller';
@@ -23,6 +26,9 @@ import "dotenv/config";
 
 const app = express();
 
+isEnvDefined()
+
+createRedisService(process.env.REDIS_URL!);
 
 app.use(express.json());
 
@@ -44,7 +50,6 @@ const PORT = process.env.PORT || 3002;
 
 server.listen(PORT, () => {
   console.log(`Realtime service listening on port ${PORT}`);
-  console.log(`Health check available at http://localhost:${PORT}/health`);
 });
 
 // Graceful shutdown
