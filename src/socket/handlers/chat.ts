@@ -1,3 +1,4 @@
+import { socketService } from "@/services/implementation/socket-service"
 import { Socket } from "socket.io"
 
 export function attach(socket: Socket) {
@@ -7,5 +8,11 @@ export function attach(socket: Socket) {
 
   socket.on('chat:typing', data => {
     console.log('typing:', data)
+  })
+
+  socket.on('hello',data=>{
+    console.log("hello reach",data);
+    
+    socketService.notifyUser({id:"68933743b49a8cf584ff3ef5",data:"notification"})
   })
 }

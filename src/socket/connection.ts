@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 import { attach as attachChat } from './handlers/chat';
-import { attach as attachRide } from './handlers/ride-tracking';
+import { attach as attachRide } from './handlers/tracking';
 import { PresenceService } from '@/utils/socket-cache';
 
 export async function onConnection(socket: Socket) {
