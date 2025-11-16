@@ -6,10 +6,10 @@ import {RedisService}  from "@Pick2Me/shared/redis";
 export async function authenticateSocket(socket: Socket, next: (err?: Error) => void) {
   try {
     const rawCookie = socket.handshake.headers.cookie;
+    
     if (!rawCookie) return next(new Error("no_cookies"));
 
     const cookies = cookie.parse(rawCookie);
-    console.log("Parsed cookies:", cookies);
     
     const accessToken = cookies.accessToken;
 
@@ -18,14 +18,15 @@ export async function authenticateSocket(socket: Socket, next: (err?: Error) => 
     try {
       const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!) as { id: string; role: string };
 
-      // Optional: check blacklist or ban
       const redis = RedisService.getInstance();
       const isBlacklisted = await redis.checkBlacklistedToken(decoded.id);
+
       if (isBlacklisted) {
         return next(new Error("user_blocked"));
       }
 
       socket.data.user = { id: decoded.id, role: decoded.role };
+      console.log("authenticateSocket", socket.data.user);
 
       return next();
     } catch (err: any) {

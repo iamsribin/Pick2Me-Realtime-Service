@@ -1,61 +1,37 @@
-import "dotenv/config";
-import express from 'express';
+import 'dotenv/config';
 import http from 'http';
-import { initSocket } from './socket';
-import { isEnvDefined } from "./utils/envChecker";
-import { createRedisService } from "@Pick2Me/shared/redis";
+import { isEnvDefined } from './utils/envChecker';
+import { createRedisService } from '@Pick2Me/shared/redis';
+import app from './server/server';
+import { initSocket } from './server/socket';
 
-// import { Consumer } from './events/consumer';
-// import { RealtimeService } from './services/realtime-service';
-// import { RideController } from './controller/ride-controller';
-// import "../src/utils/monitor-online-driver"
-// import { RideController } from './controller/implementation/ride-controller';
-// import { PaymentController } from './controller/implementation/payment-controllet';
-// import { RedisRepository } from './repository/implementation/redis-repository';
-// import { RabbitMQPublisher } from './events/publisher';
-// import { RideService } from './services/implementation/ride-service';
-// import { PaymentService } from './services/implementation/payment-service';
+const startServer = async () => {
+  try {
+    isEnvDefined();
+     console.log("sdsd",process.env.REDIS_URL);
+     
+    createRedisService(process.env.REDIS_URL!);
 
+    const server = http.createServer(app);
 
-  // const redisRepo = new RedisRepository();
+    initSocket(server);
 
-  // const realTimeService = new RideService(redisRepo);
-  // const paymentService = new PaymentService()
-  // const rideController = new RideController(realTimeService);
-  // const paymentController = new PaymentController(paymentService)
+    const PORT = process.env.PORT || 3002;
 
-const app = express();
+    server.listen(PORT, () => {
+      console.log(`Realtime service listening on port ${PORT}`);
+    });
 
-isEnvDefined()
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        console.log('Process terminated');
+      });
+    });
+  } catch (err: any) {
+    console.log(err.message);
+  }
+};
 
-createRedisService(process.env.REDIS_URL!);
-
-app.use(express.json());
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-const server = http.createServer(app);
-
-const io = initSocket(server);
-// // const realtime = new RealtimeService();
-// const consumer = new Consumer(rideController,paymentController)
-// consumer.start().catch(err => {
-//   console.error('Failed to start realtime service', err);
-//   process.exit(1);
-// });
-
-const PORT = process.env.PORT || 3002;
-
-server.listen(PORT, () => {
-  console.log(`Realtime service listening on port ${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
-});
+startServer();
