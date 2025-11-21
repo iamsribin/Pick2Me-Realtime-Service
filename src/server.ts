@@ -1,56 +1,41 @@
-import express from 'express';
+import 'reflect-metadata';
+import 'dotenv/config';
 import http from 'http';
-import { initSocket } from './socket';
-// import { Consumer } from './events/consumer';
-// import { RealtimeService } from './services/realtime-service';
-import "dotenv/config";
-// import { RideController } from './controller/ride-controller';
-// import "../src/utils/monitor-online-driver"
-// import { RideController } from './controller/implementation/ride-controller';
-// import { PaymentController } from './controller/implementation/payment-controllet';
-// import { RedisRepository } from './repository/implementation/redis-repository';
-// import { RabbitMQPublisher } from './events/publisher';
-// import { RideService } from './services/implementation/ride-service';
-// import { PaymentService } from './services/implementation/payment-service';
+import { isEnvDefined } from '@/utils/envChecker';
+import { createRedisService } from '@Pick2Me/shared/redis';
+import app from '@/server/http';
+import { initSocket } from '@/server/socket';
+import { RealTimeEventConsumer } from '@/events/consumer';
+import { connectDB } from '@Pick2Me/shared/mongo';
 
+const startServer = async () => {
+  try {
+    isEnvDefined();
 
-  // const redisRepo = new RedisRepository();
+    connectDB(process.env.MONGO_URL!);
+     
+    createRedisService(process.env.REDIS_URL!);
 
-  // const realTimeService = new RideService(redisRepo);
-  // const paymentService = new PaymentService()
-  // const rideController = new RideController(realTimeService);
-  // const paymentController = new PaymentController(paymentService)
+    const server = http.createServer(app);
 
-const app = express();
+    await RealTimeEventConsumer.init();
+    initSocket(server);
 
+    const PORT = process.env.PORT || 3002;
 
-app.use(express.json());
+    server.listen(PORT, () => {
+      console.log(`Realtime service listening on port ${PORT}`);
+    });
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        console.log('Process terminated');
+      });
+    });
+  } catch (err: any) {
+    console.log(err.message);
+  }
+};
 
-const server = http.createServer(app);
-
-const io = initSocket(server);
-// // const realtime = new RealtimeService();
-// const consumer = new Consumer(rideController,paymentController)
-// consumer.start().catch(err => {
-//   console.error('Failed to start realtime service', err);
-//   process.exit(1);
-// });
-
-const PORT = process.env.PORT || 3002;
-
-server.listen(PORT, () => {
-  console.log(`Realtime service listening on port ${PORT}`);
-  console.log(`Health check available at http://localhost:${PORT}/health`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
-});
+startServer();
