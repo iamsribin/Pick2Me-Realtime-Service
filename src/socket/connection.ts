@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 import { attach as attachChat } from './handlers/chat';
-import { attach as attachRide } from './handlers/tracking';
+import { attach as attachLocationTrack } from './handlers/tracking';
 import { PresenceService } from '@/utils/socket-cache';
 
 export async function onConnection(socket: Socket) {
@@ -12,7 +12,7 @@ export async function onConnection(socket: Socket) {
   console.log(`User ${user.id} connected with socket ID ${socket.id}`);
 
   attachChat(socket);
-  attachRide(socket);
+  attachLocationTrack(socket);
 
   await PresenceService.addSocket(user.id, socket.id);
 
