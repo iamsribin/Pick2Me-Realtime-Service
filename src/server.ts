@@ -18,7 +18,7 @@ const startServer = async () => {
 
     const server = http.createServer(app);
 
-    // await RealTimeEventConsumer.init();
+    await RealTimeEventConsumer.init();
     initSocket(server);
 
     const PORT = process.env.PORT || 3002;

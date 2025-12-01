@@ -5,8 +5,11 @@ import { Socket } from 'socket.io';
 
 export function attach(socket: Socket) {
   socket.on('driver:heartbeat', (data: { timestamp: Date; location: Coordinates }) => {
+    console.log('driver:heartbeat',data.timestamp);
+    console.log(socket.data.user.id);
+    
     const redisService = getRedisService();
-    redisService.setHeartbeat(socket.data.user.id);
+    redisService.setHeartbeat(socket.data.user.id,60);
   });
 
   socket.on(
@@ -16,7 +19,7 @@ export function attach(socket: Socket) {
         console.log('driver:location:update', data);
         const redisService = getRedisService();
         const user = socket.data.user;
-        
+
         redisService.updateOnlineDriverGeo(user.id, {
           latitude: data.latitude,
           longitude: data.longitude,
