@@ -1,3 +1,4 @@
+import { RideMatchingService } from '@/services/implementation/ride-matching-service';
 import { emitToUser } from '@/utils/socket-emit';
 import { Coordinates } from '@Pick2Me/shared/interfaces';
 import { getRedisService } from '@Pick2Me/shared/redis';
@@ -5,11 +6,11 @@ import { Socket } from 'socket.io';
 
 export function attach(socket: Socket) {
   socket.on('driver:heartbeat', (data: { timestamp: Date; location: Coordinates }) => {
-    console.log('driver:heartbeat',data.timestamp);
+    console.log('driver:heartbeat', data.timestamp);
     console.log(socket.data.user.id);
-    
+
     const redisService = getRedisService();
-    redisService.setHeartbeat(socket.data.user.id,60);
+    redisService.setHeartbeat(socket.data.user.id, 60);
   });
 
   socket.on(
@@ -24,7 +25,6 @@ export function attach(socket: Socket) {
           latitude: data.latitude,
           longitude: data.longitude,
         });
-
       } catch (error) {
         console.log(error);
         const userId = socket.data.user.id;
@@ -32,4 +32,23 @@ export function attach(socket: Socket) {
       }
     }
   );
+
+  //   rideId: string,
+  // driverId: string,
+  // action: 'ACCEPT' | 'DECLINE' | 'TIMEOUT',
+  // rideData: any
+
+  socket.on('ride:response', (response) => {
+    const rideId = response.rideId;
+    const driverId = socket.data.user.id;
+    const action = response.action;
+    console.log("response",{ rideId, driverId, action, fsdf: response.rideData });
+
+    RideMatchingService.getInstance().handleDriverResponse(
+      rideId,
+      driverId,
+      action,
+      response.rideData
+    );
+  });
 }

@@ -3,6 +3,8 @@ import { emitToRoom, emitToUser } from '@/utils/socket-emit';
 import { EventProducer } from '@/events/publisher';
 import { getIo } from '@/server/socket';
 import { RIDE_OFFER_PREFIX, RIDE_QUEUE_PREFIX } from '@Pick2Me/shared/constants';
+import { BookRideResponse } from '@/types/event-types';
+import { PresenceService } from '@/utils/socket-cache';
 
 const OFFER_TIMEOUT = 30000;
 
@@ -17,8 +19,9 @@ export class RideMatchingService {
     return this.instance;
   }
 
-  public async processRideRequest(rideData: any) {
+  public async processRideRequest(rideData: BookRideResponse) {
     const { rideId, pickupCoordinates } = rideData;
+    console.log('prosess ride ');
 
     const nearbyDrivers = await this.redisService.findNearbyDrivers(
       pickupCoordinates.latitude,
@@ -27,7 +30,7 @@ export class RideMatchingService {
     );
 
     if (nearbyDrivers.length === 0) {
-      return this.handleNoDriversAvailable(rideId, rideData.user.id);
+      return this.handleNoDriversAvailable(rideId, rideData.user.userId);
     }
 
     const sortedDrivers = await this.prioritizeDrivers(nearbyDrivers);
@@ -41,7 +44,7 @@ export class RideMatchingService {
     this.processNextDriver(rideId, rideData);
   }
 
-  private async processNextDriver(rideId: string, rideData: any) {
+  private async processNextDriver(rideId: string, rideData: BookRideResponse) {
     const queueKey = `${RIDE_QUEUE_PREFIX}${rideId}`;
 
     // const isCancelled = await this.checkIfRideCancelled(rideId);
@@ -50,7 +53,7 @@ export class RideMatchingService {
     const driverId = await this.redisService.raw().lpop(queueKey);
 
     if (!driverId) {
-      return this.handleNoDriversAvailable(rideId, rideData.user.id);
+      return this.handleNoDriversAvailable(rideId, rideData.user.userId);
     }
 
     await this.redisService.set(`${RIDE_OFFER_PREFIX}${rideId}`, driverId, 35);
@@ -62,7 +65,10 @@ export class RideMatchingService {
       timeout: 30,
     });
 
-    emitToUser(rideData.user.id, 'ride:status', { status: 'SEARCHING', currentDriverId: driverId });
+    emitToUser(rideData.user.userId, 'ride:status', {
+      status: 'SEARCHING',
+      currentDriverId: driverId,
+    });
 
     const timeout = setTimeout(async () => {
       console.log(`Driver ${driverId} timed out`);
@@ -76,7 +82,7 @@ export class RideMatchingService {
     rideId: string,
     driverId: string,
     action: 'ACCEPT' | 'DECLINE' | 'TIMEOUT',
-    rideData: any
+    rideData: BookRideResponse
   ) {
     const existingTimeout = this.offerTimeouts.get(rideId);
     if (existingTimeout) {
@@ -85,16 +91,16 @@ export class RideMatchingService {
     }
 
     const currentOfferedDriver = await this.redisService.get(`${RIDE_OFFER_PREFIX}${rideId}`);
-    if (currentOfferedDriver !== driverId && action !== 'TIMEOUT') {
-      console.warn(`Race condition or expired offer: ${driverId} tried to ${action}`);
-      return; // Ignore late responses
-    }
+    // if (currentOfferedDriver !== driverId && action !== 'TIMEOUT') {
+    //   console.warn(`Race condition or expired offer: ${driverId} tried to ${action}`);
+    //   return; // Ignore late responses
+    // }
 
     if (action === 'ACCEPT') {
       await this.confirmBooking(rideId, driverId, rideData);
     } else {
       if (action === 'DECLINE') {
-        await EventProducer.incrementDriverCancellation(driverId);
+        await EventProducer.updateDriverRideStatusCount({ driverId, status: 'DECLINE' });
       }
 
       // Remove the offer lock
@@ -105,16 +111,21 @@ export class RideMatchingService {
     }
   }
 
-  private async confirmBooking(rideId: string, driverId: string, rideData: any) {
+  private async confirmBooking(rideId: string, driverId: string, rideData: BookRideResponse) {
     await this.redisService.remove(`${RIDE_QUEUE_PREFIX}${rideId}`);
     await this.redisService.remove(`${RIDE_OFFER_PREFIX}${rideId}`);
 
-    await EventProducer.publishDriverAccepted({ rideId, driverId, status: 'Accepted' });
-
     const driverDetails = await this.redisService.getOnlineDriverDetails(driverId);
+    const driver = {
+      driverId: driverDetails?.driverId || '',
+      driverName: driverDetails?.name || '',
+      driverNumber: driverDetails?.driverNumber || '',
+      driverProfile: driverDetails?.driverPhoto || '',
+    };
+    await EventProducer.publishDriverAccepted({ id: rideData.id, driver, status: 'ACCEPT' });
 
-    const userSocket = await this.getSocketByUserId(rideData.user.id);
-    const driverSocket = await this.getSocketByUserId(driverId);
+    const userSocket = await PresenceService.getSockets(rideData.user.userId);
+    const driverSocket = await PresenceService.getSockets(driverId);
 
     const rideRoom = `ride:${rideId}`;
     if (userSocket) userSocket.join(rideRoom);
@@ -136,9 +147,9 @@ export class RideMatchingService {
     return drivers;
   }
 
-  private async getSocketByUserId(userId: string) {
-    const io = getIo();
-    const sockets = await io.in(`user:${userId}`).fetchSockets();
-    return sockets[0];
-  }
+  // private async getSocketByUserId(userId: string) {
+  //   const io = getIo();
+  //   const sockets = await io.in(`user:${userId}`).fetchSockets();
+  //   return sockets[0];
+  // }
 }

@@ -1,14 +1,37 @@
+import { DriverInfo } from '@/types/event-types';
+import { EXCHANGES, RabbitMQ, ROUTING_KEYS } from '@Pick2Me/shared/messaging';
+const url = process.env.RABBIT_URL!;
 
-export class EventProducer{
-   static publishDriverAccepted(data:{ rideId:string, driverId:string, status: string }){
+export class EventProducer {
+  static async init() {
+    await RabbitMQ.connect({ url, serviceName: 'realtime-service' });
+    await RabbitMQ.setupExchange(EXCHANGES.NOTIFICATION, 'topic');
+  }
 
-    }
+  static async publishDriverAccepted(data: { id: string; driver: DriverInfo; status: string }) {
+    this.init();
+    const rideAcceptPayload = {
+      data,
+      type: ROUTING_KEYS.RIDE_ACCEPTED,
+    };
 
-    static publishRideNoDrivers(rideId:string){
+    await RabbitMQ.publish(EXCHANGES.NOTIFICATION, ROUTING_KEYS.RIDE_ACCEPTED, rideAcceptPayload);
+    console.log('publish RIDE_ACCEPTED');
+  }
 
-    }
+  static async updateDriverRideStatusCount(data: { driverId: string; status: string }) {
+    this.init();
+    const updateDriverRideStatusCountPayload = {
+      data,
+      type: ROUTING_KEYS.UPDATE_DRIVER_RIDE_COUNT,
+    };
+    await RabbitMQ.publish(
+      EXCHANGES.NOTIFICATION,
+      ROUTING_KEYS.UPDATE_DRIVER_RIDE_COUNT,
+      updateDriverRideStatusCountPayload
+    );
+    console.log('publish INCREASE_DRIVER_RIDE_COUNT');
+  }
 
-   static incrementDriverCancellation(driverId:string){
-
-   }
+  static publishRideNoDrivers(rideId: string) {}
 }
