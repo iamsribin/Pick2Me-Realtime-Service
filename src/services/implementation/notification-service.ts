@@ -96,12 +96,14 @@ export class NotificationService implements INotificationService {
         body: newNotification.body,
         type: newNotification.type,
         title: newNotification.title,
-        date: newNotification.date.toISOString(),
+        date: newNotification.createdAt.toISOString(),
         read:newNotification.isRead,
       };
 
       return notificationDto;
     } catch (err: unknown) {
+      console.log(err);
+      
       throw err;
     }
   }

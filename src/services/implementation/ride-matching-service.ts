@@ -5,9 +5,13 @@ import { getIo } from '@/server/socket';
 import { RIDE_OFFER_PREFIX, RIDE_QUEUE_PREFIX } from '@Pick2Me/shared/constants';
 import { BookRideResponse } from '@/types/event-types';
 import { PresenceService } from '@/utils/socket-cache';
+import { container } from '@/config/inversify.config';
+import { INotificationService } from '../interfaces/i-notification-service';
+import { TYPES } from '@/types/inversify-types';
+import mongoose from 'mongoose';
 
 const OFFER_TIMEOUT = 30000;
-
+const notificationService = container.get<INotificationService>(TYPES.NotificationService);
 export class RideMatchingService {
   private static instance: RideMatchingService;
   private redisService = RedisService.getInstance();
@@ -91,15 +95,15 @@ export class RideMatchingService {
     }
 
     const currentOfferedDriver = await this.redisService.get(`${RIDE_OFFER_PREFIX}${rideId}`);
-    // if (currentOfferedDriver !== driverId && action !== 'TIMEOUT') {
-    //   console.warn(`Race condition or expired offer: ${driverId} tried to ${action}`);
-    //   return; // Ignore late responses
-    // }
+    if (currentOfferedDriver !== driverId && action !== 'TIMEOUT') {
+      console.warn(`Race condition or expired offer: ${driverId} tried to ${action}`);
+      return; // Ignore late responses
+    }
 
     if (action === 'ACCEPT') {
       await this.confirmBooking(rideId, driverId, rideData);
     } else {
-      if (action === 'DECLINE') {
+      if (action === 'DECLINE' || action === 'TIMEOUT') {
         await EventProducer.updateDriverRideStatusCount({ driverId, status: 'DECLINE' });
       }
 
@@ -124,17 +128,38 @@ export class RideMatchingService {
     };
     await EventProducer.publishDriverAccepted({ id: rideData.id, driver, status: 'ACCEPT' });
 
-    const userSocket = await PresenceService.getSockets(rideData.user.userId);
-    const driverSocket = await PresenceService.getSockets(driverId);
+    const driverNotification = await notificationService.createNotification({
+      receiverId: driverId,
+      title: `Ride ${rideData.rideId} accepted`,
+      type:"ride",
+      body: `You accepted the ride. Head to the tracking page to check the pickup details.`,
+    });
 
+    const userNotification = await notificationService.createNotification({
+      receiverId: rideData.user.userId,
+      title: `${driver.driverName} accepted your ride`,
+      type:"ride",
+      body: `Your ride ${rideData.rideId} is now confirmed. Open the tracking page to follow the driver.`,
+    });
+
+    const io = getIo();
     const rideRoom = `ride:${rideId}`;
-    if (userSocket) userSocket.join(rideRoom);
-    if (driverSocket) driverSocket.join(rideRoom);
 
-    emitToRoom(rideRoom, 'ride:started', {
-      driver: driverDetails,
-      user: rideData.user,
-      trackingId: rideRoom,
+    const userSocketIds = (await PresenceService.getSockets(rideData.user.userId)) || [];
+    const driverSocketIds = (await PresenceService.getSockets(driverId)) || [];
+
+    for (const sid of [...userSocketIds, ...driverSocketIds]) {
+      const sock = io.sockets.sockets.get(sid);
+      if (sock) sock.join(rideRoom);
+    }
+
+    rideData.driver = driver;
+    rideData.status = 'Accepted';
+
+    emitToRoom(rideRoom, 'ride:accepted', {
+      rideData,
+      userNotification,
+      driverNotification,
     });
   }
 

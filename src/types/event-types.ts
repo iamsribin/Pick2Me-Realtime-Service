@@ -9,7 +9,7 @@ interface documentsDetails {
 
 export interface expiresDocument {
   messageId: string;
-  receiverId: ObjectId;
+  receiverId: string;
   documents: documentsDetails[];
   generatedAt: Date;
 }
@@ -44,6 +44,7 @@ export interface BookRideResponse {
   duration: string;
   distanceInfo: { distance: string; distanceInKm: number };
 
+  driver?: DriverInfo;
   status: "Pending" | "Accepted" | "InRide" | "Completed" | "Cancelled";
   paymentStatus: "Pending" | "Failed" | "Completed" | "idle";
   paymentMode: "Cash" | "Wallet" | "Strip";

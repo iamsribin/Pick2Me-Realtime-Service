@@ -5,7 +5,7 @@ import { Schema, model } from "mongoose";
 const NotificationSchema = new Schema<INotificationSchema>(
     {
         receiverId: {
-            type: Schema.Types.ObjectId,
+            type: String,
             required: true,
         },
         title: {
