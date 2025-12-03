@@ -1,7 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 // import { authRouter } from '@/routes/authRouter';
-// import { userRouter } from '@/routes/userRouter';
+import { notificationRouter } from '@/routes/notificationRouter';
 import { errorHandler } from '@Pick2Me/shared/errors';
 // import { adminRoute } from '@/routes/adminRoutes';
 
@@ -15,7 +15,7 @@ app.get('/health', (req, res) => {
 });
 
 // app.use('/', authRouter);
-// app.use('/', userRouter);
+app.use('/', notificationRouter);
 // app.use('/admin', adminRoute);
 
 app.use(errorHandler);

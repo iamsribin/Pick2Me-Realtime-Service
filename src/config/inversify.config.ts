@@ -8,10 +8,12 @@ import { NotificationRepository } from '@/repository/notification-repo';
 import { INotificationSchema } from '@/entities/INotification';
 import Notification from '@/model/notification.modal';
 import { Model } from "mongoose";
+import { NotificationController } from "@/controller/notification-controller";
 
 const container = new Container();
 
 container.bind<INotificationService>(TYPES.NotificationService).to(NotificationService);
+container.bind<NotificationController>(TYPES.NotificationController).to(NotificationController);
 container.bind<INotificationRepository>(TYPES.NotificationRepository).to(NotificationRepository);
 container
   .bind<Model<INotificationSchema>>(TYPES.NotificationModel)

@@ -34,7 +34,7 @@ export class RideMatchingService {
     );
 
     if (nearbyDrivers.length === 0) {
-      return this.handleNoDriversAvailable(rideId, rideData.user.userId);
+      return this.handleNoDriversAvailable(rideData.id,rideId, rideData.user.userId);
     }
 
     const sortedDrivers = await this.prioritizeDrivers(nearbyDrivers);
@@ -57,7 +57,7 @@ export class RideMatchingService {
     const driverId = await this.redisService.raw().lpop(queueKey);
 
     if (!driverId) {
-      return this.handleNoDriversAvailable(rideId, rideData.user.userId);
+      return this.handleNoDriversAvailable(rideData.id, rideId, rideData.user.userId);
     }
 
     await this.redisService.set(`${RIDE_OFFER_PREFIX}${rideId}`, driverId, 35);
@@ -177,8 +177,8 @@ export class RideMatchingService {
     });
   }
 
-  private async handleNoDriversAvailable(rideId: string, userId: string) {
-    await EventProducer.publishRideNoDrivers(rideId);
+  private async handleNoDriversAvailable(_id:string, rideId: string, userId: string) {
+    await EventProducer.publishRideNoDrivers(_id);
     const userNotification = await notificationService.createNotification({
       receiverId: userId,
       title: `Ride ${rideId} canceled`,
