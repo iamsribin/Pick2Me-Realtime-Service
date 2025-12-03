@@ -33,5 +33,17 @@ export class EventProducer {
     console.log('publish INCREASE_DRIVER_RIDE_COUNT');
   }
 
-  static publishRideNoDrivers(rideId: string) {}
+  static async publishRideNoDrivers(rideId: string) {
+     this.init();
+    const updateDriverRideStatusCountPayload = {
+      rideId,
+      type: ROUTING_KEYS.CANCEL_RIDE,
+    };
+    await RabbitMQ.publish(
+      EXCHANGES.NOTIFICATION,
+      ROUTING_KEYS.CANCEL_RIDE,
+      updateDriverRideStatusCountPayload
+    );
+    console.log('publish INCREASE_DRIVER_RIDE_COUNT');
+  }
 }

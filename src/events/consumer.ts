@@ -28,10 +28,10 @@ export class RealTimeEventConsumer {
     await RabbitMQ.consume(QUEUES.REALTIME_QUEUE, async (msg: ConsumerTypes) => {
       switch (msg.type) {
         case ROUTING_KEYS.NOTIFY_DOCUMENT_EXPIRE:
-          const data = await notificationService.createDocumentExpireNotification(
+          const notification = await notificationService.createDocumentExpireNotification(
             msg.data as expiresDocument
           );
-          emitToUser(data.receiverId, 'notification', data);
+          emitToUser(notification.receiverId, 'notification', notification);
           break;
 
         case ROUTING_KEYS.NOTIFY_BOOK_RIDE_DRIVER:

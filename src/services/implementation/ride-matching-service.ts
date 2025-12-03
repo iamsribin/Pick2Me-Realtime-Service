@@ -2,7 +2,7 @@ import { RedisService } from '@Pick2Me/shared/redis';
 import { emitToRoom, emitToUser } from '@/utils/socket-emit';
 import { EventProducer } from '@/events/publisher';
 import { getIo } from '@/server/socket';
-import { RIDE_OFFER_PREFIX, RIDE_QUEUE_PREFIX } from '@Pick2Me/shared/constants';
+import { HEARTBEAT_PREFIX, RIDE_OFFER_PREFIX, RIDE_QUEUE_PREFIX } from '@Pick2Me/shared/constants';
 import { BookRideResponse } from '@/types/event-types';
 import { PresenceService } from '@/utils/socket-cache';
 import { container } from '@/config/inversify.config';
@@ -105,6 +105,14 @@ export class RideMatchingService {
     } else {
       if (action === 'DECLINE' || action === 'TIMEOUT') {
         await EventProducer.updateDriverRideStatusCount({ driverId, status: 'DECLINE' });
+        const notification = await notificationService.createNotification({
+          receiverId: driverId,
+          title: `Ride ${rideData.rideId} canceled`,
+          type: 'ride',
+          body: `Your cancellation count increased. This may reduce your priority for getting the next ride.
+`,
+        });
+        emitToUser(driverId,"notification",notification)
       }
 
       // Remove the offer lock
@@ -126,19 +134,25 @@ export class RideMatchingService {
       driverNumber: driverDetails?.driverNumber || '',
       driverProfile: driverDetails?.driverPhoto || '',
     };
+
+    await this.redisService.moveDriverToInRideGeo(driverId);
+
+    await this.redisService.remove(`${HEARTBEAT_PREFIX}${driverId}`);
+    await this.redisService.setHeartbeat(driverId, 120, true);
+
     await EventProducer.publishDriverAccepted({ id: rideData.id, driver, status: 'ACCEPT' });
 
     const driverNotification = await notificationService.createNotification({
       receiverId: driverId,
       title: `Ride ${rideData.rideId} accepted`,
-      type:"ride",
+      type: 'ride',
       body: `You accepted the ride. Head to the tracking page to check the pickup details.`,
     });
 
     const userNotification = await notificationService.createNotification({
       receiverId: rideData.user.userId,
       title: `${driver.driverName} accepted your ride`,
-      type:"ride",
+      type: 'ride',
       body: `Your ride ${rideData.rideId} is now confirmed. Open the tracking page to follow the driver.`,
     });
 
@@ -165,7 +179,17 @@ export class RideMatchingService {
 
   private async handleNoDriversAvailable(rideId: string, userId: string) {
     await EventProducer.publishRideNoDrivers(rideId);
-    emitToUser(userId, 'ride:error', { message: 'No drivers available nearby' });
+    const userNotification = await notificationService.createNotification({
+      receiverId: userId,
+      title: `Ride ${rideId} canceled`,
+      type: 'ride',
+      body: `No drivers are available nearby right now.`,
+    });
+
+    emitToUser(userId, 'ride:canceled', {
+      message: 'No drivers available nearby',
+      userNotification,
+    });
   }
 
   private async prioritizeDrivers(drivers: any[]) {

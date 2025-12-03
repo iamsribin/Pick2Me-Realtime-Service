@@ -13,6 +13,14 @@ export function attach(socket: Socket) {
     redisService.setHeartbeat(socket.data.user.id, 60);
   });
 
+  socket.on('inride:driver:heartbeat', (data: { timestamp: Date; location: Coordinates }) => {
+    console.log('inride:driver:heartbeat', data.timestamp);
+    console.log(socket.data.user.id);
+
+    const redisService = getRedisService();
+    redisService.setHeartbeat(socket.data.user.id, 60, true);
+  });
+
   socket.on(
     'driver:location:update',
     (data: { latitude: number; longitude: number; accuracy: number; timestamp: TimeRanges }) => {
@@ -21,7 +29,7 @@ export function attach(socket: Socket) {
         const redisService = getRedisService();
         const user = socket.data.user;
 
-        redisService.updateOnlineDriverGeo(user.id, {
+        redisService.updateDriverGeo(user.id, {
           latitude: data.latitude,
           longitude: data.longitude,
         });
@@ -33,16 +41,35 @@ export function attach(socket: Socket) {
     }
   );
 
-  //   rideId: string,
-  // driverId: string,
-  // action: 'ACCEPT' | 'DECLINE' | 'TIMEOUT',
-  // rideData: any
+  socket.on(
+    'inride:driver:location:update',
+    (data: { latitude: number; longitude: number; accuracy: number; timestamp: TimeRanges }) => {
+      try {
+        console.log('inride:driver:location:update', data);
+        const redisService = getRedisService();
+        const user = socket.data.user;
+
+        redisService.updateDriverGeo(
+          user.id,
+          {
+            latitude: data.latitude,
+            longitude: data.longitude,
+          },
+          true
+        );
+      } catch (error) {
+        console.log(error);
+        const userId = socket.data.user.id;
+        emitToUser(userId, 'error', 'error message sample');
+      }
+    }
+  );
+
 
   socket.on('ride:response', (response) => {
     const rideId = response.rideId;
     const driverId = socket.data.user.id;
     const action = response.action;
-    console.log("response",{ rideId, driverId, action, fsdf: response.rideData });
 
     RideMatchingService.getInstance().handleDriverResponse(
       rideId,
