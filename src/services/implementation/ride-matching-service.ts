@@ -34,7 +34,7 @@ export class RideMatchingService {
     );
 
     if (nearbyDrivers.length === 0) {
-      return this.handleNoDriversAvailable(rideData.id,rideId, rideData.user.userId);
+      return this.handleNoDriversAvailable(rideData.id, rideId, rideData.user.userId);
     }
 
     const sortedDrivers = await this.prioritizeDrivers(nearbyDrivers);
@@ -112,7 +112,7 @@ export class RideMatchingService {
           body: `Your cancellation count increased. This may reduce your priority for getting the next ride.
 `,
         });
-        emitToUser(driverId,"notification",notification)
+        emitToUser(driverId, 'notification', notification);
       }
 
       // Remove the offer lock
@@ -134,6 +134,8 @@ export class RideMatchingService {
       driverNumber: driverDetails?.driverNumber || '',
       driverProfile: driverDetails?.driverPhoto || '',
     };
+
+    const driverCoordinates = await this.redisService.getDriverGeoPosition(driverId);
 
     await this.redisService.moveDriverToInRideGeo(driverId);
 
@@ -167,17 +169,50 @@ export class RideMatchingService {
       if (sock) sock.join(rideRoom);
     }
 
+    const serverTs = Date.now();
+    const point = {
+      driverId: driverId,
+      rideId: rideData.rideId,
+      lat: driverCoordinates?.latitude,
+      lng: driverCoordinates?.longitude,
+      accuracy: null,
+      deviceTs: null,
+      serverTs,
+      seq: null,
+      heading: null,
+      speed: null,
+    };
+
+    const driverLocation = {
+      driverId: point.driverId,
+      rideId: point.rideId,
+      lat: point.lat,
+      lng: point.lng,
+      serverTs: point.serverTs,
+      deviceTs: point.deviceTs,
+      seq: point.seq,
+      heading: point.heading,
+      speed: point.speed,
+    };
+
     rideData.driver = driver;
     rideData.status = 'Accepted';
+    console.log('ride start==', {
+      rideData,
+      userNotification,
+      driverNotification,
+      driverLocation,
+    });
 
     emitToRoom(rideRoom, 'ride:accepted', {
       rideData,
       userNotification,
       driverNotification,
+      driverLocation,
     });
   }
 
-  private async handleNoDriversAvailable(_id:string, rideId: string, userId: string) {
+  private async handleNoDriversAvailable(_id: string, rideId: string, userId: string) {
     await EventProducer.publishRideNoDrivers(_id);
     const userNotification = await notificationService.createNotification({
       receiverId: userId,
