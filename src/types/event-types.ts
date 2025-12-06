@@ -14,9 +14,15 @@ export interface expiresDocument {
   generatedAt: Date;
 }
 
+export interface RideStart{
+  userId:string;
+  driverId:string;
+  status:string
+}
+
 export interface ConsumerTypes {
   type: string;
-  data: BookRideResponse | expiresDocument;
+  data: BookRideResponse | expiresDocument| RideStart;
 }
 
 export interface UserInfo {
@@ -51,3 +57,4 @@ export interface BookRideResponse {
   rideId: string;
   date: Date;
 }
+ 

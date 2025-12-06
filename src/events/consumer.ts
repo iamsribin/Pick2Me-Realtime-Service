@@ -1,7 +1,7 @@
 import { container } from '@/config/inversify.config';
 import { RideMatchingService } from '@/services/implementation/ride-matching-service';
 import { INotificationService } from '@/services/interfaces/i-notification-service';
-import { BookRideResponse, ConsumerTypes, expiresDocument } from '@/types/event-types';
+import { BookRideResponse, ConsumerTypes, expiresDocument, RideStart } from '@/types/event-types';
 import { TYPES } from '@/types/inversify-types';
 import { emitToUser } from '@/utils/socket-emit';
 import { EXCHANGES, QUEUES, RabbitMQ, ROUTING_KEYS } from '@Pick2Me/shared/messaging';
@@ -37,6 +37,13 @@ export class RealTimeEventConsumer {
         case ROUTING_KEYS.NOTIFY_BOOK_RIDE_DRIVER:
           console.log('NOTIFY_BOOK_RIDE_DRIVER:', msg);
           await RideMatchingService.getInstance().processRideRequest(msg.data as BookRideResponse);
+          break;
+
+        case ROUTING_KEYS.NOTIFY_RIDE_START:
+          console.log('NOTIFY_RIDE_START:', msg);
+          const rideData = msg.data as RideStart
+          emitToUser(rideData.userId,"ride:start",rideData.status)
+          emitToUser(rideData.driverId,"ride:start",rideData.status)
           break;
         default:
           console.warn('Unknown message:', msg);
