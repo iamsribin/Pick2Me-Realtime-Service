@@ -7,6 +7,7 @@ import app from '@/server/http';
 import { initSocket } from '@/server/socket';
 import { RealTimeEventConsumer } from '@/events/consumer';
 import { connectDB } from '@Pick2Me/shared/mongo';
+import { listenForExpiredKeys } from './job/check-expire';
 
 const startServer = async () => {
   try {
@@ -20,7 +21,7 @@ const startServer = async () => {
 
     await RealTimeEventConsumer.init();
     initSocket(server);
-
+     listenForExpiredKeys()
     const PORT = process.env.PORT || 3002;
 
     server.listen(PORT, () => {

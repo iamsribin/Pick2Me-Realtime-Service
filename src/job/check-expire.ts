@@ -1,4 +1,4 @@
-import { HEARTBEAT_PREFIX } from '@Pick2Me/shared/constants';
+import { HEARTBEAT_PREFIX, IN_RIDE_HEARTBEAT_PREFIX } from '@Pick2Me/shared/constants';
 import { getRedisService } from '@Pick2Me/shared/redis';
 
 export async function listenForExpiredKeys() {
@@ -7,18 +7,19 @@ export async function listenForExpiredKeys() {
 
   const subscriber = redis.duplicate();
 
-  await subscriber.connect();
+  // await subscriber.connect();
+  console.log('callle');
 
   await subscriber.subscribe('__keyevent@0__:expired');
 
   subscriber.on('message', async (_, key) => {
-    if (key.startsWith(HEARTBEAT_PREFIX)) {
+    console.log('message on expire key',key);
+    
+    if (key.startsWith(IN_RIDE_HEARTBEAT_PREFIX)) {
       const userId = key.split(':')[2];
       const driver = redisService.getOnlineDriverDetails(userId);
       console.log(`Redis TTL expired → user ${userId} marked offline`);
 
-      // TODO: Publish to RabbitMQ here
-      // await rabbit.publish('driver.offline', { userId });
     }
   });
 }

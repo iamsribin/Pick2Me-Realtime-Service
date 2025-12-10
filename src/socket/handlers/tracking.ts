@@ -15,10 +15,9 @@ export function attach(socket: Socket) {
 
   socket.on('inride:driver:heartbeat', (data: { timestamp: Date; location: Coordinates }) => {
     console.log('inride:driver:heartbeat', data.timestamp);
-    console.log(socket.data.user.id);
 
     const redisService = getRedisService();
-    redisService.setHeartbeat(socket.data.user.id, 60, true);
+    redisService.setHeartbeat(socket.data.user.id, 60, true); 
   });
 
   socket.on(

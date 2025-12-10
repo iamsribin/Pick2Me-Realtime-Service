@@ -8,7 +8,6 @@ import { PresenceService } from '@/utils/socket-cache';
 import { container } from '@/config/inversify.config';
 import { INotificationService } from '../interfaces/i-notification-service';
 import { TYPES } from '@/types/inversify-types';
-import mongoose from 'mongoose';
 
 const OFFER_TIMEOUT = 30000;
 const notificationService = container.get<INotificationService>(TYPES.NotificationService);
