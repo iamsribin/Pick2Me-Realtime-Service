@@ -1,4 +1,4 @@
-import { HEARTBEAT_PREFIX, IN_RIDE_HEARTBEAT_PREFIX } from '@Pick2Me/shared/constants';
+import { IN_RIDE_HEARTBEAT_PREFIX } from '@Pick2Me/shared/constants';
 import { getRedisService } from '@Pick2Me/shared/redis';
 
 export async function listenForExpiredKeys() {

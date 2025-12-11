@@ -99,7 +99,7 @@ console.log('inride:driver:location:update',payload);
   const room = `ride:${payload.rideId}`;
   const small = {
     driverId: point.driverId,
-      rideId: point.rideId,         // <--- include rideId
+      rideId: point.rideId,        
 
     lat: point.lat,
     lng: point.lng,
@@ -109,7 +109,7 @@ console.log('inride:driver:location:update',payload);
     heading: point.heading,
     speed: point.speed,
   };
-  // Use Socket.IO Redis adapter in multi-node env
+  // Use Socket.IO Redis adapter in multi-node env 
   // emitToRoom(room,'driver:location:update',small)
   emitToUser(small.driverId,'driver:location:update',small)
   emitToUser(payload.userId,'driver:location:update',small)
