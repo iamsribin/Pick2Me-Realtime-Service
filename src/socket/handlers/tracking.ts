@@ -13,11 +13,21 @@ export function attach(socket: Socket) {
     redisService.setHeartbeat(socket.data.user.id, 60);
   });
 
-  socket.on('inride:driver:heartbeat', (data: { timestamp: Date; location: Coordinates }) => {
+  socket.on('inride:driver:heartbeat', async (data: { timestamp: Date; location: Coordinates }) => {
     console.log('inride:driver:heartbeat', data.timestamp);
 
-    const redisService = getRedisService();
-    redisService.setHeartbeat(socket.data.user.id, 60, true);
+    const redis = getRedisService();
+    const driverId = socket.data.user?.id;
+    if (!driverId) return;
+
+    const existing = await redis.getHeartbeat(driverId, true);
+
+    const payload = existing && existing.raw !== '1' ? { ...existing } : {};
+
+    payload.lastSeen = data.timestamp;
+    payload.heartbeatCount = (payload.heartbeatCount || 0) + 1;
+
+    await redis.setHeartbeat(driverId, 60, true, payload);
   });
 
   socket.on(
@@ -41,7 +51,6 @@ export function attach(socket: Socket) {
   );
 
   socket.on('inride:driver:location:update', async (payload) => {
-    // payload: { latitude, longitude, accuracy, timestamp, rideId, seq?, heading?, speed? }
     const user = socket.data.user;
     if (!user || !user.id) return;
     console.log('inride:driver:location:update', payload);
@@ -99,6 +108,8 @@ export function attach(socket: Socket) {
       deviceTs: point.deviceTs,
       serverTs: point.serverTs,
     };
+
+    heartbeatPayload.heartbeatCount = (heartbeatPayload.heartbeatCount || 0) + 1;
     await redis.setHeartbeat(point.driverId, 120, true, heartbeatPayload);
 
     emitToUser(small.driverId, 'driver:location:update', small);

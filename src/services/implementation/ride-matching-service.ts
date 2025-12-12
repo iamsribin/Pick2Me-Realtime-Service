@@ -143,7 +143,8 @@ export class RideMatchingService {
       rideId,
       driverData:driver,
       userData: rideData.user,
-      driverCoordinates
+      driverCoordinates,
+      heartbeatCount:0
     }
     await this.redisService.setHeartbeat(driverId, 120, true, heartBeatPayload);
 
