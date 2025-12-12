@@ -139,7 +139,13 @@ export class RideMatchingService {
     await this.redisService.moveDriverToInRideGeo(driverId);
 
     await this.redisService.remove(`${HEARTBEAT_PREFIX}${driverId}`);
-    await this.redisService.setHeartbeat(driverId, 120, true);
+    const heartBeatPayload = {
+      rideId,
+      driverData:driver,
+      userData: rideData.user,
+      driverCoordinates
+    }
+    await this.redisService.setHeartbeat(driverId, 120, true, heartBeatPayload);
 
     await EventProducer.publishDriverAccepted({ id: rideData.id, driver, status: 'ACCEPT' });
 
