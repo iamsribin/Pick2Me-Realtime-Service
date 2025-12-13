@@ -13,21 +13,11 @@ export function attach(socket: Socket) {
     redisService.setHeartbeat(socket.data.user.id, 60);
   });
 
-  socket.on('inride:driver:heartbeat', async (data: { timestamp: Date; location: Coordinates }) => {
+  socket.on('inride:driver:heartbeat', (data: { timestamp: Date; location: Coordinates }) => {
     console.log('inride:driver:heartbeat', data.timestamp);
 
-    const redis = getRedisService();
-    const driverId = socket.data.user?.id;
-    if (!driverId) return;
-
-    const existing = await redis.getHeartbeat(driverId, true);
-
-    const payload = existing && existing.raw !== '1' ? { ...existing } : {};
-
-    payload.lastSeen = data.timestamp;
-    payload.heartbeatCount = (payload.heartbeatCount || 0) + 1;
-
-    await redis.setHeartbeat(driverId, 60, true, payload);
+    const redisService = getRedisService();
+    redisService.setHeartbeat(socket.data.user.id, 60, true); 
   });
 
   socket.on(
@@ -50,71 +40,80 @@ export function attach(socket: Socket) {
     }
   );
 
-  socket.on('inride:driver:location:update', async (payload) => {
-    const user = socket.data.user;
-    if (!user || !user.id) return;
-    console.log('inride:driver:location:update', payload);
+// server/socket-handlers.ts (TypeScript-like pseudocode)
+socket.on('inride:driver:location:update', async (payload) => {
+  // payload: { latitude, longitude, accuracy, timestamp, rideId, seq?, heading?, speed? }
+  const user = socket.data.user;
+  if (!user || !user.id) return;
+ console.log('inride:driver:location:update',payload);
 
-    // Validate
-    if (
-      !payload.rideId ||
-      typeof payload.latitude !== 'number' ||
-      typeof payload.longitude !== 'number'
-    ) {
-      console.log('error');
+  // Validate
+  if (!payload.rideId || typeof payload.latitude !== 'number' || typeof payload.longitude !== 'number') {
+    console.log("error");
+    
+    return emitToUser(user.id, 'error', { code: 'INVALID_PAYLOAD' });
+  }
+  if (Math.abs(payload.latitude) > 90 || Math.abs(payload.longitude) > 180) return;
 
-      return emitToUser(user.id, 'error', { code: 'INVALID_PAYLOAD' });
-    }
-    if (Math.abs(payload.latitude) > 90 || Math.abs(payload.longitude) > 180) return;
+  // // Rate limit per-socket or per-driver (simple example)
+  // if (!rateLimiter.allow(user.id)) {
+  //   return; // drop silently or send throttle ack
+  // }
 
-    const serverTs = Date.now();
-    const point = {
-      driverId: user.id,
-      rideId: payload.rideId,
-      lat: payload.latitude,
-      lng: payload.longitude,
-      accuracy: payload.accuracy || null,
-      deviceTs: payload.timestamp || null,
-      serverTs,
-      seq: payload.seq ?? null,
-      heading: payload.heading ?? null,
-      speed: payload.speed ?? null,
-    };
+  // Build canonical point
+  const serverTs = Date.now();
+  const point = {
+    driverId: user.id,
+    rideId: payload.rideId,
+    lat: payload.latitude,
+    lng: payload.longitude,
+    accuracy: payload.accuracy || null,
+    deviceTs: payload.timestamp || null,
+    serverTs,
+    seq: payload.seq ?? null,
+    heading: payload.heading ?? null,
+    speed: payload.speed ?? null,
+  };
 
-    const redis = getRedisService();
-    redis.updateDriverGeo(user.id, {
-      latitude: payload.latitude,
-      longitude: payload.longitude,
-    });
+  // Persist to Redis (atomic-ish)
+  // 1) GEOADD drivers_geo lon lat driverId (for general nearby search)
+  // 2) RPUSH ride:positions:{rideId} JSON(point) && LTRIM 0 199
+  const redis = getRedisService();
+          redis.updateDriverGeo(user.id, {
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+        });
+  // await redis.geoAdd('drivers_geo', point.lng, point.lat, user.id);
+  // await redis.rpush(`ride:positions:${payload.rideId}`, JSON.stringify(point));
+  // await redis.ltrim(`ride:positions:${payload.rideId}`, -200, -1);
 
-    const small = {
-      driverId: point.driverId,
-      rideId: point.rideId,
+  // // Optionally update last pos hash with TTL
+  // await redis.hset(`driver:last:${user.id}`, {
+  //   lat: point.lat,
+  //   lng: point.lng,
+  //   ts: serverTs,
+  // });
+  // await redis.expire(`driver:last:${user.id}`, 300); // keep 5 minutes
 
-      lat: point.lat,
-      lng: point.lng,
-      serverTs: point.serverTs,
-      deviceTs: point.deviceTs,
-      seq: point.seq,
-      heading: point.heading,
-      speed: point.speed,
-    };
+  // Emit to room
+  const room = `ride:${payload.rideId}`;
+  const small = {
+    driverId: point.driverId,
+      rideId: point.rideId,        
 
-    const existing = await redis.getHeartbeat(point.driverId, true);
-    const heartbeatPayload = existing && existing.raw !== '1' ? existing : {};
-    heartbeatPayload.driverLocation = {
-      latitude: point.lat,
-      longitude: point.lng,
-      deviceTs: point.deviceTs,
-      serverTs: point.serverTs,
-    };
-
-    heartbeatPayload.heartbeatCount = (heartbeatPayload.heartbeatCount || 0) + 1;
-    await redis.setHeartbeat(point.driverId, 120, true, heartbeatPayload);
-
-    emitToUser(small.driverId, 'driver:location:update', small);
-    emitToUser(payload.userId, 'driver:location:update', small);
-  });
+    lat: point.lat,
+    lng: point.lng,
+    serverTs: point.serverTs,
+    deviceTs: point.deviceTs,
+    seq: point.seq,
+    heading: point.heading,
+    speed: point.speed,
+  };
+  // Use Socket.IO Redis adapter in multi-node env 
+  // emitToRoom(room,'driver:location:update',small)
+  emitToUser(small.driverId,'driver:location:update',small)
+  emitToUser(payload.userId,'driver:location:update',small)
+});
 
   socket.on('ride:response', (response) => {
     const rideId = response.rideId;
