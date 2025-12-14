@@ -13,7 +13,6 @@ export class NotificationService implements INotificationService {
     @inject(TYPES.NotificationRepository) private _notificationRepository: INotificationRepository
   ) {}
 
-  // list notifications for a user (most recent first)
   async getUserNotifications(receiverId: string): Promise<INotificationDto[]> {
     const docs = await this._notificationRepository.find({ receiverId: receiverId });
     if (!docs || docs.length === 0) return [];
