@@ -1,5 +1,4 @@
 import { container } from '@/config/inversify.config';
-import { IssueService } from '@/services/implementation/issue-service';
 import { IIssueService } from '@/services/interfaces/i-issue-service';
 import { TYPES } from '@/types/inversify-types';
 import { emitToUser } from '@/utils/socket-emit';

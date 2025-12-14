@@ -7,9 +7,15 @@ export async function onConnection(socket: Socket) {
   const user = socket.data.user;
   if (!user) return socket.disconnect(true);
 
-  const userRoom = `user:${user.id}`;
-  socket.join(userRoom);
-  console.log(`User ${user.id} connected with socket ID ${socket.id}`);
+  if (user.role === "Admin") {
+    const adminRoom = `admin`;
+    socket.join(adminRoom);
+    console.log(`admin connected with socket ID ${socket.id}`);
+  } else {
+    const userRoom = `user:${user.id}`;
+    socket.join(userRoom);
+    console.log(`User ${user.id} connected with socket ID ${socket.id}`);
+  }
 
   attachChat(socket);
   attachLocationTrack(socket);
