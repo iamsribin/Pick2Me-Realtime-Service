@@ -1,5 +1,5 @@
 import { container } from '@/config/inversify.config';
-import { IIssueService } from '@/services/interfaces/i-issue-service';
+import { IAdminService } from '@/services/interfaces/i-issue-service';
 import { TYPES } from '@/types/inversify-types';
 import { emitToUser } from '@/utils/socket-emit';
 import { IN_RIDE_HEARTBEAT_PREFIX, IN_RIDE_HEARTBEAT_PREFIX_DATA } from '@Pick2Me/shared/constants';
@@ -26,7 +26,7 @@ export async function listenForExpiredKeys() {
       if (raw) {
         try {
           payload = JSON.parse(raw);
-          const issueService = container.get<IIssueService>(TYPES.IssueService);
+          const issueService = container.get<IAdminService>(TYPES.IAdminService);
           const issue = await issueService.createIssue(payload);
           emitToUser("admin", 'issue:created', issue);
           

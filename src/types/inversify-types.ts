@@ -3,7 +3,7 @@ export const TYPES = {
   NotificationController: Symbol.for('NotificationController'),
 
   NotificationService: Symbol.for('NotificationService'),
-  IssueService: Symbol.for('IssueService'),
+  IAdminService: Symbol.for('IAdminService'),
 
   NotificationRepository: Symbol.for('NotificationRepository'),
   IssueRepository: Symbol.for('IssueRepository'),

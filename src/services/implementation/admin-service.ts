@@ -1,12 +1,12 @@
 import { IIssue } from "@/entities/IIssue";
-import { IIssueService } from "../interfaces/i-issue-service";
+import { IAdminService } from "../interfaces/i-issue-service";
 import { BadRequestError, InternalError } from "@Pick2Me/shared/errors";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@/types/inversify-types";
 import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
 
 @injectable()
-export class IssueService implements IIssueService {
+export class AdminService implements IAdminService {
     constructor(@inject(TYPES.IssueRepository) private _issueRepository: IIssueRepository) { }
     async createIssue(issue: Partial<IIssue>): Promise<IIssue> {
         try {

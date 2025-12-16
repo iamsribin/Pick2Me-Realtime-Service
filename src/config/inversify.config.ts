@@ -13,15 +13,15 @@ import { IIssue } from "@/entities/IIssue";
 import Issue from "@/model/issues.model";
 import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
 import { IssueRepository } from "@/repository/issue-repo";
-import { IIssueService } from "@/services/interfaces/i-issue-service";
-import { IssueService } from "@/services/implementation/issue-service";
+import { IAdminService } from "@/services/interfaces/i-issue-service";
+import { AdminService } from "@/services/implementation/admin-service";
 
 const container = new Container();
 
 container.bind<NotificationController>(TYPES.NotificationController).to(NotificationController);
 
 container.bind<INotificationService>(TYPES.NotificationService).to(NotificationService);
-container.bind<IIssueService>(TYPES.IssueService).to(IssueService);
+container.bind<IAdminService>(TYPES.IAdminService).to(AdminService);
 
 container.bind<INotificationRepository>(TYPES.NotificationRepository).to(NotificationRepository);
 container.bind<IIssueRepository>(TYPES.IssueRepository).to(IssueRepository);

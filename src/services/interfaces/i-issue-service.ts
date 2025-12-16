@@ -1,5 +1,5 @@
 import { IIssue } from "@/entities/IIssue";
 
-export interface IIssueService {
+export interface IAdminService {
     createIssue(issue: Partial<IIssue>): Promise<IIssue>
 }
