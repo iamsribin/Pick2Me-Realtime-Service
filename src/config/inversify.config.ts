@@ -21,7 +21,7 @@ const container = new Container();
 container.bind<NotificationController>(TYPES.NotificationController).to(NotificationController);
 
 container.bind<INotificationService>(TYPES.NotificationService).to(NotificationService);
-container.bind<IAdminService>(TYPES.IAdminService).to(AdminService);
+container.bind<IAdminService>(TYPES.AdminService).to(AdminService);
 
 container.bind<INotificationRepository>(TYPES.NotificationRepository).to(NotificationRepository);
 container.bind<IIssueRepository>(TYPES.IssueRepository).to(IssueRepository);

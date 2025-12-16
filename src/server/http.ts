@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { notificationRouter } from '@/routes/notificationRouter';
 import { errorHandler } from '@Pick2Me/shared/errors';
+import { adminRouter } from '@/routes/adminRouter';
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/admin', adminRouter);
 app.use('/', notificationRouter);
 
 app.use(errorHandler);

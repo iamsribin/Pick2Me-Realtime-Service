@@ -26,10 +26,10 @@ export async function listenForExpiredKeys() {
       if (raw) {
         try {
           payload = JSON.parse(raw);
-          const issueService = container.get<IAdminService>(TYPES.IAdminService);
+          const issueService = container.get<IAdminService>(TYPES.AdminService);
           const issue = await issueService.createIssue(payload);
           emitToUser("admin", 'issue:created', issue);
-          
+          issueService.notifyAdmins(issue);
         } catch (err) {
           console.warn('failed to parse payload', err);
         }
