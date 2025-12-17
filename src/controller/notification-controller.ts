@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { injectable, inject } from "inversify";
 import { TYPES } from "@/types/inversify-types";
 import { INotificationService } from "@/services/interfaces/i-notification-service";
+import { StatusCode } from "@Pick2Me/shared/interfaces";
 
 interface GatewayUser { id: string; role?: string; }
 
@@ -9,12 +10,21 @@ interface GatewayUser { id: string; role?: string; }
 export class NotificationController {
   constructor(
     @inject(TYPES.NotificationService) private notificationService: INotificationService
-  ) {}
+  ) { }
 
-  async fetchNotifications(req: Request, res: Response) {
-    const user = (req as any).gatewayUser as GatewayUser;
-    const notifications = await this.notificationService.getUserNotifications(user.id);
-    return res.json({ success: true, data: notifications });
+  async fetchNotifications(req: Request, res: Response, next: NextFunction) {
+    try {
+
+      const user = (req as any).gatewayUser as GatewayUser;
+      const notifications = await this.notificationService.getUserNotifications(user.id);
+      console.log(notifications);
+
+      return res.status(StatusCode.OK).json({ success: true, data: notifications });
+    } catch (error) {
+      console.log(error);
+      
+      next(error)
+    }
   }
 
   async deleteNotification(req: Request, res: Response) {
@@ -24,11 +34,19 @@ export class NotificationController {
     return res.json({ success: true, message: "Notification deleted" });
   }
 
-  async markAsRead(req: Request, res: Response) {
-    const user = (req as any).gatewayUser as GatewayUser;
-    const id = req.params.id;
-    await this.notificationService.markAsReadForUser(user.id, id);
-    return res.json({ success: true, message: "Marked as read" });
+  async markAsRead(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as any).gatewayUser as GatewayUser;
+      const id = req.params.id;
+      
+      await this.notificationService.markAsReadForUser(user.id, id);
+      return res.json({ success: true, message: "Marked as read" });
+      
+    } catch (error) {
+      console.log(error);
+      
+      next(error);
+    }
   }
 
   async markAllAsRead(req: Request, res: Response) {

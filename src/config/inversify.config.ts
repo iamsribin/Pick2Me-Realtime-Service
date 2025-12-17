@@ -15,10 +15,12 @@ import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
 import { IssueRepository } from "@/repository/issue-repo";
 import { IAdminService } from "@/services/interfaces/i-issue-service";
 import { AdminService } from "@/services/implementation/admin-service";
+import { AdminController } from "@/controller/admin-controller";
 
 const container = new Container();
 
 container.bind<NotificationController>(TYPES.NotificationController).to(NotificationController);
+container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 
 container.bind<INotificationService>(TYPES.NotificationService).to(NotificationService);
 container.bind<IAdminService>(TYPES.AdminService).to(AdminService);

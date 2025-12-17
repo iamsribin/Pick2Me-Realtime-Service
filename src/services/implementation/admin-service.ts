@@ -6,20 +6,31 @@ import { TYPES } from "@/types/inversify-types";
 import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
 import webpush from 'web-push';
 import { ISubscriptionDoc, SubscriptionModel } from "@/model/subscription.model";
-import { PushSubPayload } from "@/types/notificartion-type";
+import { PushSubPayload } from "@/types/notification-type";
 
 @injectable()
 export class AdminService implements IAdminService {
     constructor(@inject(TYPES.IssueRepository) private _issueRepository: IIssueRepository) { }
-   
+
     async createIssue(issue: Partial<IIssue>): Promise<IIssue> {
         try {
-
+            
             const res = await this._issueRepository.create(issue);
             if (!res) throw BadRequestError('Unable to create issue');
             return res;
         } catch (error) {
+            console.log(error);
+            
             throw InternalError('something went wrong while creating issue')
+        }
+    }
+
+    async getUnreadIssuesCount(): Promise<number> {
+        try {
+            const issues = await this._issueRepository.find({ status: "Pending" });
+            return issues?.length || 0;
+        } catch (error) {
+            throw InternalError('something went wrong while fetching unread issues count')
         }
     }
 
@@ -43,9 +54,10 @@ export class AdminService implements IAdminService {
     }
 
     async notifyAdmins(issue: IIssue) {
+        console.log("notifyAdmins");
+        
         const payload = JSON.stringify({ title: 'New Issue', body: `Issue id: ${issue._id}`, issueId: issue._id });
 
-        // fetch subscriptions
         const subs = await this.getAllAdminSubscriptions();
 
         const sendPromises = subs.map(async (sub) => {

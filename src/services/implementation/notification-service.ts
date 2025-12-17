@@ -88,7 +88,6 @@ export class NotificationService implements INotificationService {
     };
   }
 
-  // mark a single notification as read (ensures receiver matches)
   async markAsReadForUser(receiverId: string, notificationId: string): Promise<void> {
     const doc = await this._notificationRepository.findById(notificationId);
     if (!doc) throw BadRequestError('Notification not found');
