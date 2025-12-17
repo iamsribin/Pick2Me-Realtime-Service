@@ -7,6 +7,7 @@ import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
 import webpush from 'web-push';
 import { ISubscriptionDoc, SubscriptionModel } from "@/model/subscription.model";
 import { PushSubPayload } from "@/types/notification-type";
+import { RedisService } from "@Pick2Me/shared/redis";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -119,7 +120,7 @@ export class AdminService implements IAdminService {
                 validatedLimit,
                 trimmedSearch
             );
-console.log({ issues, totalItems });
+            console.log({ issues, totalItems });
 
             if (!issues.length) {
                 return {
@@ -135,17 +136,23 @@ console.log({ issues, totalItems });
                 };
             }
 
-            const result = issues.map((issue) => ({
-                id: issue._id.toString(),
-                user: issue.user,
-                rideId: issue.rideId,
-                note: issue.note,
-                status: issue.status,
-                driver: issue.driver,
-                pickupCoordinates: issue.pickupCoordinates,
-                dropOffCoordinates: issue.dropOffCoordinates,
-                createdAt: issue.createdAt
-            }));
+            const result = await Promise.all(
+                issues.map(async (issue) => ({
+                    id: issue._id.toString(),
+                    user: issue.user,
+                    rideId: issue.rideId,
+                    note: issue.note,
+                    status: issue.status,
+                    driver: issue.driver,
+                    pickupCoordinates: issue.pickupCoordinates,
+                    dropOffCoordinates: issue.dropOffCoordinates,
+                    createdAt: issue.createdAt,
+                    currentLocation: issue.driver?.driverId
+                        ? await RedisService.getInstance().getDriverGeoPosition(issue.driver.driverId)
+                        : null,
+                }))
+            );
+
 
             const totalPages = Math.ceil(totalItems / validatedLimit);
 

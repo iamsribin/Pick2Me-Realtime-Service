@@ -59,7 +59,7 @@ export class AdminController {
             };
 
             const result = await this._adminService.getIssuesList(data);
-           console.log(result);
+           console.log(result.issues[0].currentLocation);
            
             res.status(StatusCode.OK).json({
                 issues: result.issues || [],
