@@ -8,7 +8,7 @@ const issueSchema = new Schema<IIssue>(
       required: true,
     },
     note: { type: String },
-    status: { type: String, enum: ["Pending", "Accepted"], default: "Pending" },
+    status: { type: String, enum: ["Pending", "Resolved", "Reissued"], default: "Pending" },
     user: {
       userId: { type: String, required: true },
       userName: { type: String, required: true },

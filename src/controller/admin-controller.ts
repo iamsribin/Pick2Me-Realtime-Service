@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@/types/inversify-types';
-import { IAdminService } from '@/services/interfaces/i-issue-service';
+import { IAdminService } from '@/services/interfaces/i-admin-service';
 import { BadRequestError } from '@Pick2Me/shared/errors';
 import { StatusCode } from '@Pick2Me/shared/interfaces';
 
 @injectable()
 export class AdminController {
-    constructor(@inject(TYPES.AdminService) private adminService: IAdminService) { }
+    constructor(@inject(TYPES.AdminService) private _adminService: IAdminService) { }
 
     async saveSubscriptionForAdmin(req: Request, res: Response, next: NextFunction) {
         try {
@@ -19,7 +19,7 @@ export class AdminController {
                 throw BadRequestError('Invalid subscription payload')
             }
 
-            await this.adminService.saveSubscriptionForAdmin(user.id, {
+            await this._adminService.saveSubscriptionForAdmin(user.id, {
                 endpoint: subscription.endpoint,
                 keys: {
                     p256dh: subscription.keys.p256dh,
@@ -27,16 +27,44 @@ export class AdminController {
                 },
             });
 
-            return res.status(201).json({ message: 'subscription saved' });
+            return res.status(StatusCode.Created).json({ message: 'subscription saved' });
         } catch (err) {
+            console.log(err);
             next(err);
         }
     }
 
     async getUnreadIssuesCount(req: Request, res: Response, next: NextFunction) {
         try {
-            const count = this.adminService.getUnreadIssuesCount();
-            res.status(StatusCode.OK).json({ success: true, data: { unreadCount: count } })
+            const count = await this._adminService.getUnreadIssuesCount();
+            res.status(StatusCode.OK).json({ success: true, data: count })
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getIssuesList(req: Request, res: Response, next: NextFunction) {
+        try {
+            const page = Math.max(1, Number(req.query.page) || 1);
+            const limit = Math.min(100, Number(req.query.limit) || 6);
+            const status = req.query.status;
+
+            const search = String(req.query.search || '');
+
+            const data = {
+                status: status as 'Pending' | 'Resolved' | 'Reissued',
+                page: page as number,
+                limit: limit as number,
+                search: search.toString().trim(),
+            };
+
+            const result = await this._adminService.getIssuesList(data);
+           console.log(result);
+           
+            res.status(StatusCode.OK).json({
+                issues: result.issues || [],
+                pagination: result.pagination,
+            });
         } catch (error) {
             next(error);
         }

@@ -8,20 +8,27 @@ import { initSocket } from '@/server/socket';
 import { RealTimeEventConsumer } from '@/events/consumer';
 import { connectDB } from '@Pick2Me/shared/mongo';
 import { listenForExpiredKeys } from './job/check-expire';
+import webpush from 'web-push';
 
 const startServer = async () => {
   try {
     isEnvDefined();
 
     connectDB(process.env.MONGO_URL!);
-     
+
     createRedisService(process.env.REDIS_URL!);
 
+    webpush.setVapidDetails(
+      'mailto:sribin85@gamil.com',
+      process.env.VAPID_PUBLIC!,
+      process.env.VAPID_PRIVATE!
+    );
+    
     const server = http.createServer(app);
 
     await RealTimeEventConsumer.init();
     initSocket(server);
-     listenForExpiredKeys()
+    listenForExpiredKeys()
     const PORT = process.env.PORT || 3002;
 
     server.listen(PORT, () => {

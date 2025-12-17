@@ -143,9 +143,10 @@ export class RideMatchingService {
       rideId: rideData.rideId,
       user: rideData.user,
       driver: driver,
+      pickupCoordinates: rideData.pickupCoordinates,
+      dropOffCoordinates: rideData.dropOffCoordinates
     }
     await this.redisService.setHeartbeat(driverId, 120, true, heartbeatPayload);
-
     await EventProducer.publishDriverAccepted({ id: rideData.id, driver, status: 'ACCEPT' });
 
     const driverNotification = await notificationService.createNotification({
@@ -201,12 +202,6 @@ export class RideMatchingService {
 
     rideData.driver = driver;
     rideData.status = 'Accepted';
-    console.log('ride start==', {
-      rideData,
-      userNotification,
-      driverNotification,
-      driverLocation,
-    });
 
     emitToRoom(rideRoom, 'ride:accepted', {
       rideData,

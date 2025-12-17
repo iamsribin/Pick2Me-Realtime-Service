@@ -13,7 +13,7 @@ import { IIssue } from "@/entities/IIssue";
 import Issue from "@/model/issues.model";
 import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
 import { IssueRepository } from "@/repository/issue-repo";
-import { IAdminService } from "@/services/interfaces/i-issue-service";
+import { IAdminService } from "@/services/interfaces/i-admin-service";
 import { AdminService } from "@/services/implementation/admin-service";
 import { AdminController } from "@/controller/admin-controller";
 

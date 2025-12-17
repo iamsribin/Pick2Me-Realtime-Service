@@ -14,5 +14,6 @@ router.use(verifyGatewayJwt(true, process.env.GATEWAY_SHARED_SECRET!));
 
 router.post('/push/subscribe', catchAsync(controller.saveSubscriptionForAdmin.bind(controller)));
 router.get('/issues/unread-count', catchAsync(controller.getUnreadIssuesCount.bind(controller)));
+router.get('/issues', catchAsync(controller.getIssuesList.bind(controller)));
 
 export {router as adminRouter};

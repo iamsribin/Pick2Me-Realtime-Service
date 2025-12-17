@@ -17,7 +17,9 @@ export interface IIssue extends Document {
         driverNumber: string;
         driverProfile: string;
     };
-    status: "Pending" | "Accepted";
+    status: "Pending" | "Resolved" | "Reissued";
     pickupCoordinates: LocationCoordinates;
     dropOffCoordinates: LocationCoordinates;
+    createdAt: Date;
+    updateAt: Date;
 }

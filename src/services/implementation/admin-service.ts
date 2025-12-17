@@ -1,6 +1,6 @@
 import { IIssue } from "@/entities/IIssue";
-import { IAdminService } from "../interfaces/i-issue-service";
-import { BadRequestError, InternalError } from "@Pick2Me/shared/errors";
+import { IAdminService } from "../interfaces/i-admin-service";
+import { BadRequestError, HttpError, InternalError } from "@Pick2Me/shared/errors";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@/types/inversify-types";
 import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
@@ -14,13 +14,24 @@ export class AdminService implements IAdminService {
 
     async createIssue(issue: Partial<IIssue>): Promise<IIssue> {
         try {
-            
+            const issueExists = await this._issueRepository.findOne({ rideId: issue.rideId });
+
+            if (issueExists && issueExists.status === "Pending") {
+                return issueExists
+            } else if (issueExists && issueExists.status === "Resolved") {
+                const issue = await this._issueRepository.updateOne({ rideId: issueExists.rideId }, { status: "Reissued" })
+                if (!issue) throw BadRequestError('unable to recreate issue');
+                return issue
+            } else if (issueExists) {
+                return issueExists
+            }
+
             const res = await this._issueRepository.create(issue);
             if (!res) throw BadRequestError('Unable to create issue');
             return res;
         } catch (error) {
             console.log(error);
-            
+
             throw InternalError('something went wrong while creating issue')
         }
     }
@@ -28,6 +39,7 @@ export class AdminService implements IAdminService {
     async getUnreadIssuesCount(): Promise<number> {
         try {
             const issues = await this._issueRepository.find({ status: "Pending" });
+
             return issues?.length || 0;
         } catch (error) {
             throw InternalError('something went wrong while fetching unread issues count')
@@ -55,7 +67,7 @@ export class AdminService implements IAdminService {
 
     async notifyAdmins(issue: IIssue) {
         console.log("notifyAdmins");
-        
+
         const payload = JSON.stringify({ title: 'New Issue', body: `Issue id: ${issue._id}`, issueId: issue._id });
 
         const subs = await this.getAllAdminSubscriptions();
@@ -68,6 +80,8 @@ export class AdminService implements IAdminService {
                     auth: sub.keys.auth,
                 },
             };
+            console.log("pushSubscription", pushSubscription);
+            console.log("payload", payload);
 
             try {
                 await webpush.sendNotification(pushSubscription as any, payload);
@@ -86,5 +100,71 @@ export class AdminService implements IAdminService {
         });
 
         await Promise.allSettled(sendPromises);
+    }
+
+    async getIssuesList(paginationQuery: {
+        status: "Pending" | "Resolved" | "Reissued";
+        page: number;
+        limit: number;
+        search: string;
+    }): Promise<any> {
+        try {
+            const validatedPage = Math.max(1, paginationQuery.page);
+            const validatedLimit = Math.min(50, Math.max(1, paginationQuery.limit));
+            const trimmedSearch = paginationQuery.search.trim();
+
+            const { issues, totalItems } = await this._issueRepository.findIssuesByStatusWithPagination(
+                paginationQuery.status,
+                validatedPage,
+                validatedLimit,
+                trimmedSearch
+            );
+console.log({ issues, totalItems });
+
+            if (!issues.length) {
+                return {
+                    issues: [],
+                    pagination: {
+                        currentPage: validatedPage,
+                        totalPages: 0,
+                        totalItems: 0,
+                        itemsPerPage: validatedLimit,
+                        hasNextPage: false,
+                        hasPreviousPage: false,
+                    },
+                };
+            }
+
+            const result = issues.map((issue) => ({
+                id: issue._id.toString(),
+                user: issue.user,
+                rideId: issue.rideId,
+                note: issue.note,
+                status: issue.status,
+                driver: issue.driver,
+                pickupCoordinates: issue.pickupCoordinates,
+                dropOffCoordinates: issue.dropOffCoordinates,
+                createdAt: issue.createdAt
+            }));
+
+            const totalPages = Math.ceil(totalItems / validatedLimit);
+
+            return {
+                issues: result,
+                pagination: {
+                    currentPage: validatedPage,
+                    totalPages,
+                    totalItems,
+                    itemsPerPage: validatedLimit,
+                    hasNextPage: validatedPage < totalPages,
+                    hasPreviousPage: validatedPage > 1,
+                },
+            };
+        } catch (error: unknown) {
+            if (error instanceof HttpError) throw error;
+            throw InternalError('something went wrong', {
+                details: { cause: error instanceof Error ? error.message : String(error) },
+            });
+        }
     }
 }

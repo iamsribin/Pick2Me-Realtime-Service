@@ -1,5 +1,5 @@
 import { container } from '@/config/inversify.config';
-import { IAdminService } from '@/services/interfaces/i-issue-service';
+import { IAdminService } from '@/services/interfaces/i-admin-service';
 import { TYPES } from '@/types/inversify-types';
 import { emitToUser } from '@/utils/socket-emit';
 import { IN_RIDE_HEARTBEAT_PREFIX, IN_RIDE_HEARTBEAT_PREFIX_DATA } from '@Pick2Me/shared/constants';
@@ -18,14 +18,17 @@ export async function listenForExpiredKeys() {
 
     if (key.startsWith(IN_RIDE_HEARTBEAT_PREFIX)) {
 
-      const driverId = key.split(':')[2];
-      const payloadKey = `${IN_RIDE_HEARTBEAT_PREFIX_DATA}${driverId}`;
-      const raw = await redisService.raw().get(payloadKey);
-      let payload = null;
+      // const driverId = key.split(':')[2];
+      const driverId = key.split(':')[3];
+      console.log(driverId);
+      // console.log(driverId2);
 
-      if (raw) {
+    const raw = await redisService.get(`${IN_RIDE_HEARTBEAT_PREFIX_DATA}${driverId}`);
+    const payload = raw ? JSON.parse(raw) : null;
+    console.log("payload", payload);
+
+      if (payload) {
         try {
-          payload = JSON.parse(raw);
           const issueService = container.get<IAdminService>(TYPES.AdminService);
           const issue = await issueService.createIssue(payload);
           emitToUser("admin", 'issue:created', issue);
@@ -36,7 +39,7 @@ export async function listenForExpiredKeys() {
       }
 
 
-      console.log(`Redis TTL expired → user ${driverId} marked offline`);
+      console.log(`Redis TTL expired → driver ${driverId} created issue`);
     }
   });
 }
