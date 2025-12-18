@@ -1,7 +1,7 @@
 import { container } from '@/config/inversify.config';
 import { IAdminService } from '@/services/interfaces/i-admin-service';
 import { TYPES } from '@/types/inversify-types';
-import { emitToUser } from '@/utils/socket-emit';
+import { emitToRoom } from '@/utils/socket-emit';
 import { IN_RIDE_HEARTBEAT_PREFIX, IN_RIDE_HEARTBEAT_PREFIX_DATA } from '@Pick2Me/shared/constants';
 import { getRedisService } from '@Pick2Me/shared/redis';
 
@@ -31,7 +31,7 @@ export async function listenForExpiredKeys() {
         try {
           const issueService = container.get<IAdminService>(TYPES.AdminService);
           const issue = await issueService.createIssue(payload);
-          emitToUser("admin", 'issue:created', issue);
+          emitToRoom("admin", 'issue:created', issue);
           issueService.notifyAdmins(issue);
         } catch (err) {
           console.warn('failed to parse payload', err);

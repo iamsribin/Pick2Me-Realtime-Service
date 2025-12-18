@@ -45,7 +45,6 @@ export class NotificationService implements INotificationService {
   }
 
   async createDocumentExpireNotification(documentData: expiresDocument): Promise<INotificationDto> {
-    // your existing implementation mostly okay; small cleanup
     const documentTypes = documentData.documents
       .map(d => d.documentType)
       .filter(Boolean)
@@ -97,14 +96,11 @@ export class NotificationService implements INotificationService {
     if (!updated) throw BadRequestError('Failed to mark notification as read!');
   }
 
-  // mark all as read for receiver
   async markAllAsRead(receiverId: string): Promise<void> {
-    // assume repo exposes updateAllNotifications(receiverId) as you used earlier
     const result = await this._notificationRepository.updateAllNotifications(receiverId);
-    if (!result) throw new Error('Failed to mark notifications as read!');
+    if (!result) throw BadRequestError('Failed to mark notifications as read!');
   }
 
-  // delete single notification ensuring ownership
   async deleteNotificationForUser(receiverId: string, notificationId: string): Promise<void> {
     const doc = await this._notificationRepository.findById(notificationId);
     if (!doc) throw BadRequestError('Notification not found');
@@ -114,20 +110,16 @@ export class NotificationService implements INotificationService {
     if (!deleted) throw BadRequestError('Failed to delete notification!');
   }
 
-  // delete all notifications for a user
   async deleteAllNotificationsForUser(receiverId: string): Promise<void> {
-    // Prefer repository-level bulk delete for efficiency.
-    // Expect repo to implement deleteAllForReceiver(receiverId)
+
     const result = await (this._notificationRepository as any).deleteAllForReceiver(receiverId);
-    if (!result) throw new Error('Failed to delete notifications');
+    if (!result) throw BadRequestError('Failed to delete notifications');
   }
 
   async countUnread(receiverId: string): Promise<number> {
-    // If repository has a specialized method use it; otherwise use find + count
     const count = await (this._notificationRepository as any).countUnread(receiverId);
     if (typeof count === 'number') return count;
 
-    // fallback
     const docs = await this._notificationRepository.find({ receiverId: receiverId, isRead: false });
     return Array.isArray(docs) ? docs.length : 0;
   }

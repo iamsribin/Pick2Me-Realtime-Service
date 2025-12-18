@@ -63,8 +63,9 @@ export class NotificationController {
 
   async clearAll(req: Request, res: Response, next: NextFunction) {
     try {
-
       const user = (req as any).gatewayUser as GatewayUser;
+      console.log(user);
+      
       await this.notificationService.deleteAllNotificationsForUser(user.id);
       return res.json({ success: true, message: "All notifications cleared" });
     } catch (error) {

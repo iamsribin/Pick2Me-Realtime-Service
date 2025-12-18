@@ -1,6 +1,6 @@
 import { IIssue } from "@/entities/IIssue";
 import { IAdminService } from "../interfaces/i-admin-service";
-import { BadRequestError, HttpError, InternalError } from "@Pick2Me/shared/errors";
+import { BadRequestError, ConflictError, HttpError, InternalError } from "@Pick2Me/shared/errors";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@/types/inversify-types";
 import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
@@ -18,13 +18,13 @@ export class AdminService implements IAdminService {
             const issueExists = await this._issueRepository.findOne({ rideId: issue.rideId });
 
             if (issueExists && issueExists.status === "Pending") {
-                return issueExists
+                throw ConflictError('Issue already reported for this ride')
             } else if (issueExists && issueExists.status === "Resolved") {
                 const issue = await this._issueRepository.updateOne({ rideId: issueExists.rideId }, { status: "Reissued" })
                 if (!issue) throw BadRequestError('unable to recreate issue');
                 return issue
             } else if (issueExists) {
-                return issueExists
+                throw ConflictError('Issue already reported for this ride')
             }
 
             const res = await this._issueRepository.create(issue);
@@ -67,7 +67,6 @@ export class AdminService implements IAdminService {
     }
 
     async notifyAdmins(issue: IIssue) {
-        console.log("notifyAdmins");
 
         const payload = JSON.stringify({ title: 'New Issue', body: `Issue id: ${issue._id}`, issueId: issue._id });
 
@@ -81,8 +80,6 @@ export class AdminService implements IAdminService {
                     auth: sub.keys.auth,
                 },
             };
-            console.log("pushSubscription", pushSubscription);
-            console.log("payload", payload);
 
             try {
                 await webpush.sendNotification(pushSubscription as any, payload);

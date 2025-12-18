@@ -18,7 +18,6 @@ export function attach(socket: Socket) {
     console.log('inride:driver:heartbeat', data.timestamp);
 
     const redisService = getRedisService();
-
     redisService.setHeartbeat(socket.data.user.id, 120, true);
   });
 
