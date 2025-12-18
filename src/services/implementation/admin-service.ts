@@ -174,4 +174,13 @@ export class AdminService implements IAdminService {
             });
         }
     }
+
+    async resolveIssue(issueId: string, note: string): Promise<void> {
+        try {
+            const issue = await this._issueRepository.update(issueId, { status: 'Resolved', note })
+        } catch (error) {
+            if (error instanceof HttpError) throw error;
+            throw InternalError('something went wrong');
+        }
+    }
 }

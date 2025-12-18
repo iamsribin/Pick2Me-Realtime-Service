@@ -12,4 +12,5 @@ export interface IAdminService {
         limit: number;
         search: string;
     }): Promise<any>;
+    resolveIssue(issueId: string, note: string): Promise<void>;
 }

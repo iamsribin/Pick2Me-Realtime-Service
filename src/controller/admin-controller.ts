@@ -59,14 +59,27 @@ export class AdminController {
             };
 
             const result = await this._adminService.getIssuesList(data);
-           console.log(result.issues[0].currentLocation);
-           
+
             res.status(StatusCode.OK).json({
                 issues: result.issues || [],
                 pagination: result.pagination,
             });
         } catch (error) {
             next(error);
+        }
+    }
+
+    async resolveIssue(req: Request, res: Response, next: NextFunction) {
+        try {
+            const issueId = req.params.id;
+            const {note} = req.body
+            console.log({issueId, note});
+            
+            if (!issueId) throw BadRequestError('issue id is required');
+            await this._adminService.resolveIssue(issueId,note);
+            res.status(StatusCode.OK).json({ message: 'Issue resolved successfully' })
+        } catch (error) {
+            next(error)
         }
     }
 }
