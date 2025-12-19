@@ -1,17 +1,34 @@
-import { Socket } from "socket.io"
+import { emitToUser } from "@/utils/socket-emit";
+import { Socket } from "socket.io";
 
 export function attach(socket: Socket) {
-  socket.on('chat:message', data => {
-    console.log('message:', data)
-  })
+  // Existing message & image
+  socket.on("send:message", (data) => {
+    console.log("message:", data);
+    emitToUser(data.receiver, "send:message", data);
+  });
 
-  socket.on('chat:typing', data => {
-    console.log('typing:', data)
-  })
+  socket.on("send:image", (data) => {
+    console.log("image:", data);
+    emitToUser(data.receiver, "send:image", data);
+  });
 
-  socket.on('hello',data=>{
-    console.log("hello reach",data);
-    
-    // socketService.notifyUser({id:"68933743b49a8cf584ff3ef5",data:"notification"})
-  })
+  // Typing indicator
+  socket.on("chat:typing", (data: { receiver: string; isTyping: boolean }) => {
+    emitToUser(data.receiver, "chat:typing", { isTyping: data.isTyping });
+  });
+
+  // Edit message
+  socket.on("chat:edit", (data: { receiver: string; messageId: string; newText: string }) => {
+    emitToUser(data.receiver, "chat:edit", data);
+  });
+
+  // Delete message
+  socket.on("chat:delete", (data: { receiver: string; messageId: string }) => {
+    emitToUser(data.receiver, "chat:delete", data);
+  });
+
+  socket.on("hello", (data) => {
+    console.log("hello reach", data);
+  });
 }
