@@ -72,11 +72,10 @@ export class AdminController {
     async resolveIssue(req: Request, res: Response, next: NextFunction) {
         try {
             const issueId = req.params.id;
-            const {note} = req.body
-            console.log({issueId, note});
-            
+            const { note } = req.body
+
             if (!issueId) throw BadRequestError('issue id is required');
-            await this._adminService.resolveIssue(issueId,note);
+            await this._adminService.resolveIssue(issueId, note);
             res.status(StatusCode.OK).json({ message: 'Issue resolved successfully' })
         } catch (error) {
             next(error)

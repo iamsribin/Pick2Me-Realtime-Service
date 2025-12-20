@@ -1,4 +1,3 @@
-import { Socket } from 'dgram';
 import { getIo } from '../server/socket';
 
 export const emitToUser = (userId: string, event: string, payload: any) => {
@@ -15,6 +14,3 @@ export const emitToRoom = (room: string, event: string, payload: any) => {
   getIo().to(room).emit(event, payload);
 };
 
-export const broadcastExcept = (socket: Socket, event: string, payload: any) => {
-//   socket.broadcast.emit(event, payload);
-};

@@ -117,7 +117,6 @@ export class AdminService implements IAdminService {
                 validatedLimit,
                 trimmedSearch
             );
-            console.log({ issues, totalItems });
 
             if (!issues.length) {
                 return {

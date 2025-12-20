@@ -3,6 +3,7 @@ import { Socket } from "socket.io";
 
 export function attach(socket: Socket) {
   socket.on("send:message", (data) => {
+    console.log("Received message:", data);
     emitToUser(data.receiver, "send:message", data);
   });
 

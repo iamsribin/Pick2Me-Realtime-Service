@@ -24,7 +24,6 @@ export class RideMatchingService {
 
   public async processRideRequest(rideData: BookRideResponse) {
     const { rideId, pickupCoordinates } = rideData;
-    console.log('prosess ride ');
 
     const nearbyDrivers = await this.redisService.findNearbyDrivers(
       pickupCoordinates.latitude,
@@ -60,8 +59,6 @@ export class RideMatchingService {
     }
 
     await this.redisService.set(`${RIDE_OFFER_PREFIX}${rideId}`, driverId, 35);
-
-    console.log(`Offering ride ${rideId} to driver ${driverId}`);
 
     emitToUser(driverId, 'ride:request', {
       ...rideData,
@@ -229,10 +226,4 @@ export class RideMatchingService {
   private async prioritizeDrivers(drivers: any[]) {
     return drivers;
   }
-
-  // private async getSocketByUserId(userId: string) {
-  //   const io = getIo();
-  //   const sockets = await io.in(`user:${userId}`).fetchSockets();
-  //   return sockets[0];
-  // }
 }
