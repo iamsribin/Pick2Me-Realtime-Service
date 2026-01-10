@@ -1,7 +1,7 @@
 import { INotificationDto } from '@/dto/INotification.Dto';
 import { INotificationSchema } from '@/entities/INotification';
 import { INotificationRepository } from '@/repository/interfaces/i-notification-repo';
-import { BadRequestError } from '@Pick2Me/shared/errors';
+import { BadRequestError } from '@pick2me/shared/errors';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@/types/inversify-types';
 import { expiresDocument } from '@/types/event-types';

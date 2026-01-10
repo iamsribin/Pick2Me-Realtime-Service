@@ -1,8 +1,8 @@
-import { RedisService } from '@Pick2Me/shared/redis';
+import { RedisService } from '@pick2me/shared/redis';
 import { emitToRoom, emitToUser } from '@/utils/socket-emit';
 import { EventProducer } from '@/events/publisher';
 import { getIo } from '@/server/socket';
-import { HEARTBEAT_PREFIX, RIDE_OFFER_PREFIX, RIDE_QUEUE_PREFIX } from '@Pick2Me/shared/constants';
+import { HEARTBEAT_PREFIX, RIDE_OFFER_PREFIX, RIDE_QUEUE_PREFIX } from '@pick2me/shared/constants';
 import { BookRideResponse } from '@/types/event-types';
 import { PresenceService } from '@/utils/socket-cache';
 import { container } from '@/config/inversify.config';

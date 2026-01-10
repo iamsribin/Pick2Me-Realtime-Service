@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { injectable, inject } from "inversify";
 import { TYPES } from "@/types/inversify-types";
 import { INotificationService } from "@/services/interfaces/i-notification-service";
-import { StatusCode } from "@Pick2Me/shared/interfaces";
+import { StatusCode } from "@pick2me/shared/interfaces";
 
 interface GatewayUser { id: string; role?: string; }
 

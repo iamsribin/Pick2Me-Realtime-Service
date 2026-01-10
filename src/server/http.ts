@@ -1,7 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { notificationRouter } from '@/routes/notificationRouter';
-import { errorHandler } from '@Pick2Me/shared/errors';
+import { errorHandler } from '@pick2me/shared/errors';
 import { adminRouter } from '@/routes/adminRouter';
 
 const app = express();

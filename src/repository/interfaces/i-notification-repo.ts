@@ -1,5 +1,5 @@
 import { INotificationSchema } from "@/entities/INotification"
-import { IMongoBaseRepository } from "@Pick2Me/shared/mongo"
+import { IMongoBaseRepository } from "@pick2me/shared/mongo"
 import { UpdateWriteOpResult } from "mongoose"
 
 export interface INotificationRepository extends IMongoBaseRepository<INotificationSchema> {

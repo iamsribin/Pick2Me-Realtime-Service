@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@/types/inversify-types';
 import { IAdminService } from '@/services/interfaces/i-admin-service';
-import { BadRequestError } from '@Pick2Me/shared/errors';
-import { StatusCode } from '@Pick2Me/shared/interfaces';
+import { BadRequestError } from '@pick2me/shared/errors';
+import { StatusCode } from '@pick2me/shared/interfaces';
 
 @injectable()
 export class AdminController {

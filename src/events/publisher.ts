@@ -1,5 +1,5 @@
 import { DriverInfo } from '@/types/event-types';
-import { EXCHANGES, RabbitMQ, ROUTING_KEYS } from '@Pick2Me/shared/messaging';
+import { EXCHANGES, RabbitMQ, ROUTING_KEYS } from '@pick2me/shared/messaging';
 const url = process.env.RABBIT_URL!;
 
 export class EventProducer {

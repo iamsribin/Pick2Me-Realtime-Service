@@ -1,5 +1,5 @@
 import { INotificationSchema } from "@/entities/INotification";
-import { MongoBaseRepository } from "@Pick2Me/shared/mongo";
+import { MongoBaseRepository } from "@pick2me/shared/mongo";
 import { Model, Types, UpdateWriteOpResult } from "mongoose";
 import { INotificationRepository } from "./interfaces/i-notification-repo";
 import { inject, injectable } from "inversify";

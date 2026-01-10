@@ -1,7 +1,7 @@
 import { Socket } from "socket.io";
 import * as cookie from "cookie";
 import jwt from "jsonwebtoken";
-import {RedisService}  from "@Pick2Me/shared/redis"; 
+import {RedisService}  from "@pick2me/shared/redis"; 
 
 export async function authenticateSocket(socket: Socket, next: (err?: Error) => void) {
   try {

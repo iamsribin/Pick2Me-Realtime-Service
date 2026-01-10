@@ -1,5 +1,5 @@
 import { IIssue } from "@/entities/IIssue";
-import { MongoBaseRepository } from "@Pick2Me/shared/mongo";
+import { MongoBaseRepository } from "@pick2me/shared/mongo";
 import { inject, injectable } from "inversify";
 import { FilterQuery, Model } from "mongoose";
 import { IIssueRepository } from "./interfaces/i-issue-repo";

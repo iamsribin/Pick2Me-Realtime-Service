@@ -43,4 +43,14 @@ export function attach(socket: Socket) {
   socket.on("call:end", (data: { receiver: string }) => {
     emitToUser(data.receiver, "call:ended", {});
   });
+
+  socket.on("user:cash-payment:conformation", (data) => {
+    console.log("user:cash-payment:conformation",data);
+        emitToUser(data.driverId, "user:cash-payment:conformation", data);
+  });
+
+    socket.on("driver:cash-payment:not-received", (data) => {
+    console.log("driver:cash-payment:not-received",data);
+        emitToUser(data.userId, "driver:cash-payment:not-received", data);
+  });
 }

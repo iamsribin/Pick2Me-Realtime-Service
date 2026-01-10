@@ -4,7 +4,7 @@ import { INotificationService } from '@/services/interfaces/i-notification-servi
 import { BookRideResponse, ConsumerTypes, expiresDocument, RideStart } from '@/types/event-types';
 import { TYPES } from '@/types/inversify-types';
 import { emitToUser } from '@/utils/socket-emit';
-import { EXCHANGES, QUEUES, RabbitMQ, ROUTING_KEYS } from '@Pick2Me/shared/messaging';
+import { EXCHANGES, QUEUES, RabbitMQ, ROUTING_KEYS } from '@pick2me/shared/messaging';
 
 const notificationService = container.get<INotificationService>(TYPES.NotificationService);
 export class RealTimeEventConsumer {
@@ -26,6 +26,8 @@ export class RealTimeEventConsumer {
     ]);
 
     await RabbitMQ.consume(QUEUES.REALTIME_QUEUE, async (msg: ConsumerTypes) => {
+      console.log("msg:",msg);
+      
       switch (msg.type) {
         case ROUTING_KEYS.NOTIFY_DOCUMENT_EXPIRE:
           const notification = await notificationService.createDocumentExpireNotification(
@@ -42,8 +44,15 @@ export class RealTimeEventConsumer {
         case ROUTING_KEYS.NOTIFY_RIDE_START:
           console.log('NOTIFY_RIDE_START:', msg);
           const rideData = msg.data as RideStart
-          emitToUser(rideData.userId,"ride:start",rideData.status)
-          emitToUser(rideData.driverId,"ride:start",rideData.status)
+          emitToUser(rideData.userId, "ride:start", rideData.status)
+          emitToUser(rideData.driverId, "ride:start", rideData.status)
+          break;
+
+        case ROUTING_KEYS.RIDE_COMPLETED:
+          console.log('Ride completed notifyed:', msg);
+          const completedRideData = msg.data as any
+          emitToUser(completedRideData.userId, "ride:completed", completedRideData)
+          // emitToUser(completedRideData.driverId, "ride:completed", completedRideData)
           break;
         default:
           console.warn('Unknown message:', msg);

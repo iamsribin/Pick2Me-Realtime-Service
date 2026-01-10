@@ -3,7 +3,7 @@ import { Server as SocketIOServer} from "socket.io";
 import { Server as HttpServer } from 'http';
 import { authenticateSocket } from '@/middleware/authenticate-socket';
 import { onConnection } from '@/socket/connection';
-import { getRedisService } from '@Pick2Me/shared/redis';
+import { getRedisService } from '@pick2me/shared/redis';
 
 let io: SocketIOServer;
 

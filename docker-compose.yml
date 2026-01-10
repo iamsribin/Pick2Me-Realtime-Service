@@ -1,0 +1,17 @@
+services:
+  user-service:
+    image: pick2me-realtime-service:1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: realtime-service
+    env_file:
+      - .env
+    ports:
+      - "3009:3009"
+    networks:
+      - miro-backend
+
+networks:
+  miro-backend:
+    external: true

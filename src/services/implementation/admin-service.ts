@@ -1,13 +1,13 @@
 import { IIssue } from "@/entities/IIssue";
 import { IAdminService } from "../interfaces/i-admin-service";
-import { BadRequestError, ConflictError, HttpError, InternalError } from "@Pick2Me/shared/errors";
+import { BadRequestError, ConflictError, HttpError, InternalError } from "@pick2me/shared/errors";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@/types/inversify-types";
 import { IIssueRepository } from "@/repository/interfaces/i-issue-repo";
 import webpush from 'web-push';
 import { ISubscriptionDoc, SubscriptionModel } from "@/model/subscription.model";
 import { PushSubPayload } from "@/types/notification-type";
-import { RedisService } from "@Pick2Me/shared/redis";
+import { RedisService } from "@pick2me/shared/redis";
 
 @injectable()
 export class AdminService implements IAdminService {

@@ -2,11 +2,11 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import http from 'http';
 import { isEnvDefined } from '@/utils/envChecker';
-import { createRedisService } from '@Pick2Me/shared/redis';
+import { createRedisService } from '@pick2me/shared/redis';
 import app from '@/server/http';
 import { initSocket } from '@/server/socket';
 import { RealTimeEventConsumer } from '@/events/consumer';
-import { connectDB } from '@Pick2Me/shared/mongo';
+import { connectDB } from '@pick2me/shared/mongo';
 import { listenForExpiredKeys } from './job/check-expire';
 import webpush from 'web-push';
 
@@ -28,8 +28,8 @@ const startServer = async () => {
 
     await RealTimeEventConsumer.init();
     initSocket(server);
-    listenForExpiredKeys()
-    const PORT = process.env.PORT || 3002;
+    listenForExpiredKeys();
+    const PORT = process.env.PORT;
 
     server.listen(PORT, () => {
       console.log(`Realtime service listening on port ${PORT}`);

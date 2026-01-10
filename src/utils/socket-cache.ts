@@ -1,5 +1,5 @@
-import { SOCKET_PREFIX } from '@Pick2Me/shared/constants';
-import { getRedisService } from '@Pick2Me/shared/redis';
+import { SOCKET_PREFIX } from '@pick2me/shared/constants';
+import { getRedisService } from '@pick2me/shared/redis';
 
 const socketsKey = (userId: string) => `${SOCKET_PREFIX}${userId}`;
 

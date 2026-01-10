@@ -1,8 +1,8 @@
 import express from 'express';
 import { container } from '@/config/inversify.config';
-import { verifyGatewayJwt } from '@Pick2Me/shared/auth';
+import { verifyGatewayJwt } from '@pick2me/shared/auth';
 import { TYPES } from '@/types/inversify-types';
-import { catchAsync } from '@Pick2Me/shared/utils';
+import { catchAsync } from '@pick2me/shared/utils';
 import { NotificationController } from '@/controller/notification-controller';
 
 const controller = container.get<NotificationController>(TYPES.NotificationController);

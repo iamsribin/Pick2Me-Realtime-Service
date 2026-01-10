@@ -1,7 +1,7 @@
 import { RideMatchingService } from '@/services/implementation/ride-matching-service';
 import { emitToUser } from '@/utils/socket-emit';
-import { Coordinates } from '@Pick2Me/shared/interfaces';
-import { getRedisService } from '@Pick2Me/shared/redis';
+import { Coordinates } from '@pick2me/shared/interfaces';
+import { getRedisService } from '@pick2me/shared/redis';
 import { Socket } from 'socket.io';
 
 export function attach(socket: Socket) {

@@ -1,4 +1,4 @@
-import { LocationCoordinates } from "@Pick2Me/shared/interfaces";
+import { LocationCoordinates } from "@pick2me/shared/interfaces";
 import { Document, ObjectId } from "mongoose";
 
 export interface IIssue extends Document {

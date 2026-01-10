@@ -2,8 +2,8 @@ import { container } from '@/config/inversify.config';
 import { IAdminService } from '@/services/interfaces/i-admin-service';
 import { TYPES } from '@/types/inversify-types';
 import { emitToRoom } from '@/utils/socket-emit';
-import { IN_RIDE_HEARTBEAT_PREFIX, IN_RIDE_HEARTBEAT_PREFIX_DATA } from '@Pick2Me/shared/constants';
-import { getRedisService } from '@Pick2Me/shared/redis';
+import { IN_RIDE_HEARTBEAT_PREFIX, IN_RIDE_HEARTBEAT_PREFIX_DATA } from '@pick2me/shared/constants';
+import { getRedisService } from '@pick2me/shared/redis';
 
 export async function listenForExpiredKeys() {
   const redisService = getRedisService();
@@ -13,7 +13,7 @@ export async function listenForExpiredKeys() {
 
   await subscriber.subscribe('__keyevent@0__:expired');
 
-  subscriber.on('message', async (_, key) => {
+  subscriber.on('message', async (channel: string, key: string) => {
     console.log('message on expire key', key);
 
     if (key.startsWith(IN_RIDE_HEARTBEAT_PREFIX)) {
