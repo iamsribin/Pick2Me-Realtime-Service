@@ -13,6 +13,7 @@ export class RealTimeEventConsumer {
 
     await RabbitMQ.setupExchange(EXCHANGES.DRIVER, 'topic');
     await RabbitMQ.setupExchange(EXCHANGES.BOOKING, 'topic');
+    await RabbitMQ.setupExchange(EXCHANGES.PAYMENT, 'topic');
 
     await RabbitMQ.bindQueueToExchanges(QUEUES.REALTIME_QUEUE, [
       {
@@ -22,6 +23,10 @@ export class RealTimeEventConsumer {
       {
         exchange: EXCHANGES.BOOKING,
         routingKeys: ['booking-realtime.#'],
+      },
+      {
+        exchange: EXCHANGES.PAYMENT,
+        routingKeys: ['payment-realtime.#'],
       },
     ]);
 
@@ -53,6 +58,12 @@ export class RealTimeEventConsumer {
           const completedRideData = msg.data as any
           emitToUser(completedRideData.userId, "ride:completed", completedRideData)
           // emitToUser(completedRideData.driverId, "ride:completed", completedRideData)
+          break;
+          case ROUTING_KEYS.NOTIFY_PAYMENT_COMPLETED:
+          // const paymentNotification = await notificationService.createDocumentExpireNotification(
+          //   msg.data
+          // );
+          emitToUser(msg.data, 'payment:completed', msg.data);
           break;
         default:
           console.warn('Unknown message:', msg);

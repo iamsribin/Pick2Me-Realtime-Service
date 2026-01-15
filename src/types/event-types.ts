@@ -22,7 +22,7 @@ export interface RideStart{
 
 export interface ConsumerTypes {
   type: string;
-  data: BookRideResponse | expiresDocument| RideStart;
+  data: BookRideResponse | expiresDocument| RideStart | any;
 }
 
 export interface UserInfo {

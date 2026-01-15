@@ -1,5 +1,5 @@
 services:
-  user-service:
+  realtime-service:
     image: pick2me-realtime-service:1.0
     build:
       context: .
